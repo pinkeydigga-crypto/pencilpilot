@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -15,8 +15,17 @@ import {
   Sparkles
 } from 'lucide-react';
 
+interface Profile {
+  id: string;
+  name: string | null;
+  xp: number;
+  streak: number;
+  completed_challenges?: any[];
+  avatar_seed?: string | null;
+}
+
 const getCartoonAvatar = (seed: string) => {
-  return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed || 'artist'}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+  return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(seed || 'artist')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 };
 
 // Canvas roundRect Polyfill Helper (Prevents crash on Safari/Mobile)
@@ -37,8 +46,8 @@ const drawRoundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: n
 export default function LeaderboardPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string>("");
-  const [userProfile, setUserProfile] = useState<any>(null); // Direct profile fallback
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [userProfile, setUserProfile] = useState<Profile | null>(null);
+  const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number }>({ hours: 0, minutes: 0, seconds: 0 });
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
@@ -51,7 +60,6 @@ export default function LeaderboardPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
-        // Fetch user profile directly so Share button works even if leaderboard query is slow or filtered
         const { data: profile } = await supabase
           .from('profiles')
           .select('id, name, xp, streak, completed_challenges, avatar_seed')
@@ -63,7 +71,27 @@ export default function LeaderboardPage() {
     fetchUser();
   }, []);
 
-  // 2. Real Midnight UTC Countdown (Persistent 24hr Timer)
+  // 2. Fetch Leaderboard profiles sorted by XP
+  const fetchLeaderboard = useCallback(async () => {
+    if (!supabase) { 
+      setLoading(false); 
+      return; 
+    }
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, name, xp, streak, completed_challenges, avatar_seed')
+      .order('xp', { ascending: false });
+    
+    if (data && !error) setLeaderboard(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
+
+  // 3. Real Midnight UTC Countdown (Persistent 24hr Timer)
   useEffect(() => {
     const updateCountdown = () => {
       const now = new Date();
@@ -77,177 +105,161 @@ export default function LeaderboardPage() {
         return;
       }
 
-      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((diff / (1000 * 60)) % 60);
-      const seconds = Math.floor((diff / 1000) % 60);
-
-      setTimeLeft({ hours, minutes, seconds });
+      setTimeLeft({
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60)
+      });
     };
 
     updateCountdown();
     const timer = setInterval(updateCountdown, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [fetchLeaderboard]);
 
-  // 3. Fetch Leaderboard profiles sorted by XP
-  async function fetchLeaderboard() {
-    if (!supabase) { setLoading(false); return; }
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, name, xp, streak, completed_challenges, avatar_seed')
-      .order('xp', { ascending: false });
-    
-    if (data && !error) setLeaderboard(data);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    fetchLeaderboard();
-  }, []);
-
-  // Current user info (Uses leaderboard item if present, else fallbacks to direct userProfile)
+  // Current user info
   const currentUserIndex = leaderboard.findIndex(u => u.id === userId);
   const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : userProfile;
   const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : 'N/A';
 
   // 4. Generate & Draw Canvas Share Card with User Avatar
   useEffect(() => {
-    if (showShareModal && currentUser && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+    if (!showShareModal || !currentUser || !canvasRef.current) return;
 
-      canvas.width = 1080;
-      canvas.height = 1080;
+    let isSubscribed = true;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-      // Background Blue Gradient
-      const grad = ctx.createLinearGradient(0, 0, 1080, 1080);
-      grad.addColorStop(0, '#2563EB');
-      grad.addColorStop(1, '#1D4ED8');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 1080, 1080);
+    canvas.width = 1080;
+    canvas.height = 1080;
 
-      // Decorative Dots / Grid
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-      for (let x = 40; x < 1080; x += 60) {
-        for (let y = 40; y < 1080; y += 60) {
-          ctx.beginPath();
-          ctx.arc(x, y, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
+    // Background Blue Gradient
+    const grad = ctx.createLinearGradient(0, 0, 1080, 1080);
+    grad.addColorStop(0, '#2563EB');
+    grad.addColorStop(1, '#1D4ED8');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1080, 1080);
+
+    // Decorative Dots Grid
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    for (let x = 40; x < 1080; x += 60) {
+      for (let y = 40; y < 1080; y += 60) {
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
       }
+    }
 
-      // Brand Title Header
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '900 48px sans-serif';
-      ctx.fillText('Pencil Pilot', 120, 120);
-      ctx.fillStyle = '#93C5FD';
-      ctx.font = '600 28px sans-serif';
-      ctx.fillText('AI Drawing Coach', 120, 160);
+    // Brand Title Header
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 48px sans-serif';
+    ctx.fillText('Pencil Pilot', 120, 120);
+    ctx.fillStyle = '#93C5FD';
+    ctx.font = '600 28px sans-serif';
+    ctx.fillText('AI Drawing Coach', 120, 160);
 
-      // Tagline
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '900 82px sans-serif';
-      ctx.fillText('Make it', 120, 340);
-      ctx.fillText('finally', 120, 440);
-      ctx.fillText('click.', 120, 540);
+    // Tagline
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 82px sans-serif';
+    ctx.fillText('Make it', 120, 340);
+    ctx.fillText('finally', 120, 440);
+    ctx.fillText('click.', 120, 540);
 
-      // Card Container (White)
-      const cardX = 540;
-      const cardY = 160;
-      const cardW = 460;
-      const cardH = 760;
-      const radius = 40;
+    // Card Container (White)
+    const cardX = 540;
+    const cardY = 160;
+    const cardW = 460;
+    const cardH = 760;
+    const radius = 40;
+
+    ctx.save();
+    ctx.beginPath();
+    drawRoundRect(ctx, cardX, cardY, cardW, cardH, radius);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 40;
+    ctx.fill();
+    ctx.restore();
+
+    // Card Rank Badge
+    ctx.fillStyle = '#2563EB';
+    ctx.beginPath();
+    drawRoundRect(ctx, cardX + 40, cardY + 40, 380, 64, 18);
+    ctx.fill();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '800 28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`GLOBAL RANK #${userRank}`, cardX + 230, cardY + 82);
+
+    const drawCardDetails = () => {
+      if (!isSubscribed) return;
+      ctx.textAlign = 'center';
+
+      // User Name
+      ctx.fillStyle = '#0F172A';
+      ctx.font = '800 38px sans-serif';
+      ctx.fillText(currentUser.name || 'Artist Pilot', cardX + 230, cardY + 295);
+
+      // User XP Badge Box
+      ctx.fillStyle = '#FEF3C7';
+      ctx.beginPath();
+      drawRoundRect(ctx, cardX + 70, cardY + 330, 320, 80, 24);
+      ctx.fill();
+
+      ctx.fillStyle = '#D97706';
+      ctx.font = '900 40px sans-serif';
+      ctx.fillText(`${currentUser.xp || 0} XP`, cardX + 230, cardY + 384);
+
+      // Streak
+      ctx.fillStyle = '#475569';
+      ctx.font = '700 22px sans-serif';
+      ctx.fillText(`🔥 ${currentUser.streak || 0} Day Streak`, cardX + 230, cardY + 460);
+
+      // Footer Brand
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '600 20px sans-serif';
+      ctx.fillText('pencilpilot.com', cardX + 230, cardY + 680);
+    };
+
+    // Load & Draw User Avatar Image
+    const avatarImg = new Image();
+    avatarImg.crossOrigin = 'anonymous';
+    avatarImg.src = getCartoonAvatar(currentUser.avatar_seed || currentUser.name || '');
+
+    avatarImg.onload = () => {
+      if (!isSubscribed) return;
+      const avatarX = cardX + 230;
+      const avatarY = cardY + 185;
+      const avatarRadius = 55;
 
       ctx.save();
       ctx.beginPath();
-      ctx.moveTo(cardX + radius, cardY);
-      ctx.lineTo(cardX + cardW - radius, cardY);
-      ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + radius);
-      ctx.lineTo(cardX + cardW, cardY + cardH - radius);
-      ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - radius, cardY + cardH);
-      ctx.lineTo(cardX + radius, cardY + cardH);
-      ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - radius);
-      ctx.lineTo(cardX, cardY + radius);
-      ctx.quadraticCurveTo(cardX, cardY, cardX + radius, cardY);
+      ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
       ctx.closePath();
-      ctx.fillStyle = '#FFFFFF';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-      ctx.shadowBlur = 40;
-      ctx.fill();
+      ctx.clip();
+      ctx.drawImage(avatarImg, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
       ctx.restore();
 
-      // Card Rank Badge
-      ctx.fillStyle = '#2563EB';
       ctx.beginPath();
-      drawRoundRect(ctx, cardX + 40, cardY + 40, 380, 64, 18);
-      ctx.fill();
+      ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#3B82F6';
+      ctx.stroke();
 
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '800 28px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(`GLOBAL RANK #${userRank}`, cardX + 230, cardY + 82);
+      drawCardDetails();
+    };
 
-      const drawCardDetails = () => {
-        // User Name
-        ctx.fillStyle = '#0F172A';
-        ctx.font = '800 38px sans-serif';
-        ctx.fillText(currentUser.name || 'Artist Pilot', cardX + 230, cardY + 295);
+    avatarImg.onerror = () => {
+      if (!isSubscribed) return;
+      drawCardDetails();
+    };
 
-        // User XP Badge Box
-        ctx.fillStyle = '#FEF3C7';
-        ctx.beginPath();
-        drawRoundRect(ctx, cardX + 70, cardY + 330, 320, 80, 24);
-        ctx.fill();
-
-        ctx.fillStyle = '#D97706';
-        ctx.font = '900 40px sans-serif';
-        ctx.fillText(`${currentUser.xp || 0} XP`, cardX + 230, cardY + 384);
-
-        // Streak & Challenges info inside card
-        ctx.fillStyle = '#475569';
-        ctx.font = '700 22px sans-serif';
-        ctx.fillText(`🔥 ${currentUser.streak || 0} Day Streak`, cardX + 230, cardY + 460);
-
-        // Footer Brand inside card
-        ctx.fillStyle = '#94A3B8';
-        ctx.font = '600 20px sans-serif';
-        ctx.fillText('pencilpilot.com', cardX + 230, cardY + 680);
-      };
-
-      // Load & Draw User Avatar Image inside Card
-      const avatarImg = new Image();
-      avatarImg.crossOrigin = 'anonymous';
-      avatarImg.src = getCartoonAvatar(currentUser.avatar_seed || currentUser.name);
-
-      avatarImg.onload = () => {
-        const avatarX = cardX + 230;
-        const avatarY = cardY + 185;
-        const avatarRadius = 55;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(avatarImg, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
-        ctx.restore();
-
-        ctx.beginPath();
-        ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = '#3B82F6';
-        ctx.stroke();
-
-        drawCardDetails();
-      };
-
-      avatarImg.onerror = () => {
-        // Fallback drawing if avatar image fails to load on production
-        drawCardDetails();
-      };
-    }
+    return () => {
+      isSubscribed = false;
+    };
   }, [showShareModal, currentUser, userRank]);
 
   // Download Card as PNG
@@ -336,7 +348,7 @@ export default function LeaderboardPage() {
                   <div className={`flex flex-col items-center space-y-2 w-28 text-center p-3 rounded-2xl border ${leaderboard[1].id === userId ? 'border-blue-500 bg-blue-50/50 ring-2 ring-blue-400' : 'border-slate-200 bg-white'}`}>
                     <div className="relative">
                       <img 
-                        src={getCartoonAvatar(leaderboard[1].avatar_seed || leaderboard[1].name)} 
+                        src={getCartoonAvatar(leaderboard[1].avatar_seed || leaderboard[1].name || '')} 
                         alt="avatar" 
                         className="w-14 h-14 rounded-2xl border-2 border-slate-400 shadow-md bg-slate-100 object-cover p-0.5" 
                       />
@@ -359,7 +371,7 @@ export default function LeaderboardPage() {
                     <div className="relative">
                       <div className="absolute -top-7 left-1/2 -translate-x-1/2 text-2xl">🥇</div>
                       <img 
-                        src={getCartoonAvatar(leaderboard[0].avatar_seed || leaderboard[0].name)} 
+                        src={getCartoonAvatar(leaderboard[0].avatar_seed || leaderboard[0].name || '')} 
                         alt="avatar" 
                         className="w-18 h-18 rounded-3xl border-2 border-amber-500 shadow-xl bg-amber-100 object-cover p-0.5" 
                       />
@@ -380,7 +392,7 @@ export default function LeaderboardPage() {
                   <div className={`flex flex-col items-center space-y-2 w-28 text-center p-3 rounded-2xl border ${leaderboard[2].id === userId ? 'border-blue-500 bg-blue-50/50 ring-2 ring-blue-400' : 'border-amber-700/40 bg-white'}`}>
                     <div className="relative">
                       <img 
-                        src={getCartoonAvatar(leaderboard[2].avatar_seed || leaderboard[2].name)} 
+                        src={getCartoonAvatar(leaderboard[2].avatar_seed || leaderboard[2].name || '')} 
                         alt="avatar" 
                         className="w-14 h-14 rounded-2xl border-2 border-amber-600 shadow-md bg-amber-50 object-cover p-0.5" 
                       />
@@ -421,7 +433,7 @@ export default function LeaderboardPage() {
                         <div className="flex items-center gap-4">
                           <span className="font-black text-amber-500 text-sm w-6">#{rankNum}</span>
                           <img 
-                            src={getCartoonAvatar(user.avatar_seed || user.name)} 
+                            src={getCartoonAvatar(user.avatar_seed || user.name || '')} 
                             alt="avatar" 
                             className="w-10 h-10 rounded-xl bg-blue-100 object-cover border border-slate-200 shadow-sm flex-shrink-0 p-0.5" 
                           />
