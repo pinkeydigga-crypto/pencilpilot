@@ -117,10 +117,10 @@ export default function LeaderboardPage() {
     return () => clearInterval(timer);
   }, [fetchLeaderboard]);
 
-  // Current user info
+  // Current user info with fallback to #1 artist if not logged in
   const currentUserIndex = leaderboard.findIndex(u => u.id === userId);
-  const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : userProfile;
-  const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : 'N/A';
+  const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : (userProfile || leaderboard[0] || null);
+  const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : (userProfile ? 'N/A' : 1);
 
   // 4. Generate & Draw Canvas Share Card with User Avatar
   useEffect(() => {
@@ -288,14 +288,12 @@ export default function LeaderboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {(currentUser || userId) && (
-              <button 
-                onClick={() => setShowShareModal(true)}
-                className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 text-white px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <Share2 className="w-4 h-4" /> Share Rank
-              </button>
-            )}
+            <button 
+              onClick={() => setShowShareModal(true)}
+              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 text-white px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Share2 className="w-4 h-4" /> Share Rank
+            </button>
 
             <button 
               onClick={() => router.push('/dashboard')}
