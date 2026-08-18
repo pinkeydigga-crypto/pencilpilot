@@ -19,21 +19,46 @@ const getCartoonAvatar = (seed: string) => {
   return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed || 'artist'}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 };
 
+// Canvas roundRect Polyfill Helper (Prevents crash on Safari/Mobile)
+const drawRoundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, w, h, r);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+};
+
 export default function LeaderboardPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string>("");
+  const [userProfile, setUserProfile] = useState<any>(null); // Direct profile fallback
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number }>({ hours: 0, minutes: 0, seconds: 0 });
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // 1. Fetch Current Logged-In User
+  // 1. Fetch Current Logged-In User & Profile Direct Fallback
   useEffect(() => {
     async function fetchUser() {
       if (!supabase) return;
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) setUserId(user.id);
+      if (user) {
+        setUserId(user.id);
+        // Fetch user profile directly so Share button works even if leaderboard query is slow or filtered
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, name, xp, streak, completed_challenges, avatar_seed')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (profile) setUserProfile(profile);
+      }
     }
     fetchUser();
   }, []);
@@ -81,10 +106,10 @@ export default function LeaderboardPage() {
     fetchLeaderboard();
   }, []);
 
-  // Current user info
+  // Current user info (Uses leaderboard item if present, else fallbacks to direct userProfile)
   const currentUserIndex = leaderboard.findIndex(u => u.id === userId);
-  const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : null;
-  const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : null;
+  const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : userProfile;
+  const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : 'N/A';
 
   // 4. Generate & Draw Canvas Share Card with User Avatar
   useEffect(() => {
@@ -121,7 +146,7 @@ export default function LeaderboardPage() {
       ctx.font = '600 28px sans-serif';
       ctx.fillText('AI Drawing Coach', 120, 160);
 
-      // Tagline (Instant line removed)
+      // Tagline
       ctx.fillStyle = '#FFFFFF';
       ctx.font = '900 82px sans-serif';
       ctx.fillText('Make it', 120, 340);
@@ -156,7 +181,7 @@ export default function LeaderboardPage() {
       // Card Rank Badge
       ctx.fillStyle = '#2563EB';
       ctx.beginPath();
-      ctx.roundRect(cardX + 40, cardY + 40, 380, 64, 18);
+      drawRoundRect(ctx, cardX + 40, cardY + 40, 380, 64, 18);
       ctx.fill();
 
       ctx.fillStyle = '#FFFFFF';
@@ -164,31 +189,7 @@ export default function LeaderboardPage() {
       ctx.textAlign = 'center';
       ctx.fillText(`GLOBAL RANK #${userRank}`, cardX + 230, cardY + 82);
 
-      // Load & Draw User Avatar Image inside Card
-      const avatarImg = new Image();
-      avatarImg.crossOrigin = 'anonymous';
-      avatarImg.src = getCartoonAvatar(currentUser.avatar_seed || currentUser.name);
-      avatarImg.onload = () => {
-        // Draw Avatar Circle
-        const avatarX = cardX + 230;
-        const avatarY = cardY + 185;
-        const avatarRadius = 55;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(avatarImg, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
-        ctx.restore();
-
-        // Avatar Border Ring
-        ctx.beginPath();
-        ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = '#3B82F6';
-        ctx.stroke();
-
+      const drawCardDetails = () => {
         // User Name
         ctx.fillStyle = '#0F172A';
         ctx.font = '800 38px sans-serif';
@@ -197,7 +198,7 @@ export default function LeaderboardPage() {
         // User XP Badge Box
         ctx.fillStyle = '#FEF3C7';
         ctx.beginPath();
-        ctx.roundRect(cardX + 70, cardY + 330, 320, 80, 24);
+        drawRoundRect(ctx, cardX + 70, cardY + 330, 320, 80, 24);
         ctx.fill();
 
         ctx.fillStyle = '#D97706';
@@ -213,6 +214,38 @@ export default function LeaderboardPage() {
         ctx.fillStyle = '#94A3B8';
         ctx.font = '600 20px sans-serif';
         ctx.fillText('pencilpilot.com', cardX + 230, cardY + 680);
+      };
+
+      // Load & Draw User Avatar Image inside Card
+      const avatarImg = new Image();
+      avatarImg.crossOrigin = 'anonymous';
+      avatarImg.src = getCartoonAvatar(currentUser.avatar_seed || currentUser.name);
+
+      avatarImg.onload = () => {
+        const avatarX = cardX + 230;
+        const avatarY = cardY + 185;
+        const avatarRadius = 55;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(avatarImg, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#3B82F6';
+        ctx.stroke();
+
+        drawCardDetails();
+      };
+
+      avatarImg.onerror = () => {
+        // Fallback drawing if avatar image fails to load on production
+        drawCardDetails();
       };
     }
   }, [showShareModal, currentUser, userRank]);
@@ -243,7 +276,7 @@ export default function LeaderboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {currentUser && (
+            {(currentUser || userId) && (
               <button 
                 onClick={() => setShowShareModal(true)}
                 className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 text-white px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98]"

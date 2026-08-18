@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -16,6 +16,69 @@ import {
   Target,
   Check
 } from 'lucide-react';
+
+interface Profile {
+  id: string;
+  name?: string;
+  xp?: number;
+  total_xp?: number;
+  streak?: number;
+  last_activity_date?: string;
+  completed_challenges?: string[];
+}
+
+interface TutorialStep {
+  step: number;
+  title: string;
+  instruction: string;
+  tips: string[];
+  svgType: string;
+}
+
+const EYE_STEPS: TutorialStep[] = [
+  {
+    step: 1,
+    title: "Basic Eye Shape",
+    instruction: "Create a simple almond-shaped outline as shown in the reference guide to establish overall proportions.",
+    tips: ["Keep both sides symmetrical", "Use light, flexible pencil strokes"],
+    svgType: "outline"
+  },
+  {
+    step: 2,
+    title: "Add Iris",
+    instruction: "Sketch a clean circle inside the almond shape for the iris and a smaller center dot for the pupil.",
+    tips: ["Ensure proper center alignment", "Keep lines light and erasable"],
+    svgType: "iris"
+  },
+  {
+    step: 3,
+    title: "Add Eyelids",
+    instruction: "Draw the upper eyelid crease curve above the almond shape to establish anatomical depth.",
+    tips: ["Match the curve to the upper slope", "Keep the transition smooth"],
+    svgType: "eyelids"
+  },
+  {
+    step: 4,
+    title: "Add Eyelashes",
+    instruction: "Flick outward light strokes along the top and bottom lash lines to form natural tapered eyelashes.",
+    tips: ["Make upper lashes longer and thicker", "Flick wrist outward quickly"],
+    svgType: "eyelashes"
+  },
+  {
+    step: 5,
+    title: "Add Shading",
+    instruction: "Shade gradient tones inside the iris and add soft structural shadows under the upper lid for realism.",
+    tips: ["Leave a tiny white dot unshaded for light reflection", "Blend softly with a blending stump"],
+    svgType: "shading"
+  },
+  {
+    step: 6,
+    title: "Final Realistic Eye",
+    instruction: "Clean up unwanted guidelines, darken pupil accents, and finalize your complete realistic eye drawing!",
+    tips: ["Check overall contrast", "Sign your completed artwork"],
+    svgType: "final"
+  }
+];
 
 export default function ChallengesPage() {
   const router = useRouter();
@@ -34,63 +97,42 @@ export default function ChallengesPage() {
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
 
   // Leaderboard state
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState<boolean>(true);
 
-  // 6 Step Eye Tutorial Data
-  const eyeSteps = [
-    {
-      step: 1,
-      title: "Basic Eye Shape",
-      instruction: "Create a simple almond-shaped outline as shown in the reference guide to establish overall proportions.",
-      tips: ["Keep both sides symmetrical", "Use light, flexible pencil strokes"],
-      svgType: "outline"
-    },
-    {
-      step: 2,
-      title: "Add Iris",
-      instruction: "Sketch a clean circle inside the almond shape for the iris and a smaller center dot for the pupil.",
-      tips: ["Ensure proper center alignment", "Keep lines light and erasable"],
-      svgType: "iris"
-    },
-    {
-      step: 3,
-      title: "Add Eyelids",
-      instruction: "Draw the upper eyelid crease curve above the almond shape to establish anatomical depth.",
-      tips: ["Match the curve to the upper slope", "Keep the transition smooth"],
-      svgType: "eyelids"
-    },
-    {
-      step: 4,
-      title: "Add Eyelashes",
-      instruction: "Flick outward light strokes along the top and bottom lash lines to form natural tapered eyelashes.",
-      tips: ["Make upper lashes longer and thicker", "Flick wrist outward quickly"],
-      svgType: "eyelashes"
-    },
-    {
-      step: 5,
-      title: "Add Shading",
-      instruction: "Shade gradient tones inside the iris and add soft structural shadows under the upper lid for realism.",
-      tips: ["Leave a tiny white dot unshaded for light reflection", "Blend softly with a blending stump"],
-      svgType: "shading"
-    },
-    {
-      step: 6,
-      title: "Final Realistic Eye",
-      instruction: "Clean up unwanted guidelines, darken pupil accents, and finalize your complete realistic eye drawing!",
-      tips: ["Check overall contrast", "Sign your completed artwork"],
-      svgType: "final"
-    }
-  ];
+  // Helper to fetch & update leaderboard rankings
+  const refreshLeaderboard = useCallback(async (currentUserId: string) => {
+    setLoadingLeaderboard(true);
+    const { data: lbData, error: lbError } = await supabase
+      .from('profiles')
+      .select('*');
 
-  // User & Profile Data Loader
-  const processUserData = async (user: any) => {
+    if (lbError) {
+      console.error("Error fetching leaderboard:", lbError.message);
+    } else if (lbData) {
+      const normalizedLb: Profile[] = lbData
+        .map((u: Profile) => ({
+          ...u,
+          xp: u.xp !== undefined && u.xp !== null ? u.xp : (u.total_xp || 0)
+        }))
+        .sort((a: Profile, b: Profile) => (b.xp || 0) - (a.xp || 0));
+
+      setLeaderboard(normalizedLb);
+      const userIndex = normalizedLb.findIndex((u) => u.id === currentUserId);
+      if (userIndex !== -1) {
+        setRank(userIndex + 1);
+      }
+    }
+    setLoadingLeaderboard(false);
+  }, []);
+
+  // Process User & Profile Data
+  const processUserData = useCallback(async (user: { id: string; email?: string; user_metadata?: { full_name?: string } }) => {
     if (!user) return;
 
     const currentUserId = user.id;
     setUserId(currentUserId);
 
-    // Check / Create Profile
     const defaultName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Artist';
 
     let { data: userData, error: fetchErr } = await supabase
@@ -99,9 +141,7 @@ export default function ChallengesPage() {
       .eq('id', currentUserId)
       .maybeSingle();
 
-    if (fetchErr) {
-      console.error("Profile fetch error:", fetchErr.message);
-    }
+    if (fetchErr) console.error("Profile fetch error:", fetchErr.message);
 
     if (!userData) {
       const { data: newProfile, error: createErr } = await supabase
@@ -133,38 +173,16 @@ export default function ChallengesPage() {
       }
     }
 
-    // Fetch Leaderboard
-    setLoadingLeaderboard(true);
-    const { data: lbData, error: lbError } = await supabase
-      .from('profiles')
-      .select('*');
+    await refreshLeaderboard(currentUserId);
+  }, [refreshLeaderboard]);
 
-    if (lbError) console.error("Error fetching leaderboard:", lbError.message);
-
-    if (lbData) {
-      const normalizedLb = lbData.map((u: any) => ({
-        ...u,
-        xp: u.xp !== undefined && u.xp !== null ? u.xp : (u.total_xp || 0)
-      })).sort((a: any, b: any) => b.xp - a.xp);
-
-      setLeaderboard(normalizedLb);
-      const userIndex = normalizedLb.findIndex((u: any) => u.id === currentUserId);
-      if (userIndex !== -1) {
-        setRank(userIndex + 1);
-      }
-    }
-    setLoadingLeaderboard(false);
-  };
-
-  // Safe Session Verification & Real-time Auth Monitoring
+  // Auth Monitoring Listener
   useEffect(() => {
     if (!supabase) return;
 
     let isMounted = true;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
-      console.log("🔔 Auth Event Triggered:", event, "User ID:", session?.user?.id);
-
       if (session?.user) {
         if (isMounted) {
           await processUserData(session.user);
@@ -172,7 +190,6 @@ export default function ChallengesPage() {
         }
       } else {
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') {
-          console.warn("⚠️ No active session found! Redirecting to login...");
           if (isMounted) {
             setLoading(false);
             router.push('/login');
@@ -185,9 +202,9 @@ export default function ChallengesPage() {
       isMounted = false;
       subscription?.unsubscribe();
     };
-  }, [router]);
+  }, [router, processUserData]);
 
-  // Handle completing challenge
+  // Handle challenge submission
   const handleFinishChallenge = async () => {
     if (!userId) return;
 
@@ -244,20 +261,7 @@ export default function ChallengesPage() {
 
         if (error) console.error("Supabase upsert error:", error.message);
         
-        const { data: lbData } = await supabase
-          .from('profiles')
-          .select('*');
-
-        if (lbData) {
-          const normalizedLb = lbData.map((u: any) => ({
-            ...u,
-            xp: u.xp !== undefined && u.xp !== null ? u.xp : (u.total_xp || 0)
-          })).sort((a: any, b: any) => b.xp - a.xp);
-
-          setLeaderboard(normalizedLb);
-          const userIndex = normalizedLb.findIndex((u: any) => u.id === userId);
-          if (userIndex !== -1) setRank(userIndex + 1);
-        }
+        await refreshLeaderboard(userId);
       } catch (err) {
         console.error("Unexpected error saving XP:", err);
       }
@@ -309,7 +313,6 @@ export default function ChallengesPage() {
     );
   };
 
-  // Show clean spinner while checking authentication state
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
@@ -455,7 +458,7 @@ export default function ChallengesPage() {
                   {/* TOP 3 PODIUM SECTION */}
                   {leaderboard.length >= 1 && (
                     <div className="flex justify-center items-end gap-2 sm:gap-3 pt-6 pb-4">
-                      {/* 2nd Place (Left) */}
+                      {/* 2nd Place */}
                       {leaderboard[1] && (
                         <div className="flex flex-col items-center space-y-2 w-24 sm:w-28">
                           <div className="relative">
@@ -475,7 +478,7 @@ export default function ChallengesPage() {
                         </div>
                       )}
 
-                      {/* 1st Place (Center) */}
+                      {/* 1st Place */}
                       {leaderboard[0] && (
                         <div className="flex flex-col items-center space-y-2 w-28 sm:w-32 -mt-6">
                           <div className="relative">
@@ -495,7 +498,7 @@ export default function ChallengesPage() {
                         </div>
                       )}
 
-                      {/* 3rd Place (Right) */}
+                      {/* 3rd Place */}
                       {leaderboard[2] && (
                         <div className="flex flex-col items-center space-y-2 w-24 sm:w-28">
                           <div className="relative">
@@ -517,7 +520,7 @@ export default function ChallengesPage() {
                     </div>
                   )}
 
-                  {/* 4TH RANK ONWARDS LIST SECTION */}
+                  {/* 4TH RANK ONWARDS */}
                   <div className="space-y-2 pt-2">
                     {leaderboard.slice(3).map((user, idx) => {
                       const rankNum = idx + 4;
@@ -529,7 +532,7 @@ export default function ChallengesPage() {
                             isCurrentUser 
                               ? 'bg-blue-950 border-blue-500 shadow-md ring-1 ring-blue-500' 
                               : 'bg-slate-800/80 border-slate-700 hover:bg-slate-800'
-                        }`}
+                          }`}
                         >
                           <div className="flex items-center gap-3 sm:gap-4 truncate">
                             <span className="font-black text-amber-500 text-sm w-6 flex-shrink-0">#{rankNum}</span>
@@ -575,13 +578,13 @@ export default function ChallengesPage() {
             <div className="flex justify-between items-center border-b border-slate-100 pb-4">
               <div>
                 <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-lg uppercase">
-                  Step {currentStep + 1} of {eyeSteps.length}
+                  Step {currentStep + 1} of {EYE_STEPS.length}
                 </span>
-                <h3 className="text-xl font-black text-slate-900 mt-1">{eyeSteps[currentStep].title}</h3>
+                <h3 className="text-xl font-black text-slate-900 mt-1">{EYE_STEPS[currentStep].title}</h3>
               </div>
               <button 
                 onClick={() => setActiveView('hub')}
-                className="text-xs font-bold text-slate-500 hover:text-slate-800 bg-slate-100 px-3 py-1.5 rounded-xl transition"
+                className="text-xs font-bold text-slate-500 hover:text-slate-800 bg-slate-100 px-3 py-1.5 rounded-xl transition cursor-pointer"
               >
                 Exit Challenge
               </button>
@@ -589,19 +592,19 @@ export default function ChallengesPage() {
 
             {/* Step Illustration */}
             <div className="w-full h-56 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center shadow-inner">
-              {renderStepIllustration(eyeSteps[currentStep].svgType)}
+              {renderStepIllustration(EYE_STEPS[currentStep].svgType)}
             </div>
 
             {/* Instructions & Tips */}
             <div className="space-y-4">
               <p className="text-sm md:text-base text-slate-700 font-medium leading-relaxed">
-                {eyeSteps[currentStep].instruction}
+                {EYE_STEPS[currentStep].instruction}
               </p>
 
               <div className="bg-blue-50/60 border border-blue-100 p-4 rounded-2xl space-y-2">
                 <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wider">Pro Tips:</h4>
                 <ul className="space-y-1">
-                  {eyeSteps[currentStep].tips.map((tip, idx) => (
+                  {EYE_STEPS[currentStep].tips.map((tip, idx) => (
                     <li key={idx} className="text-xs text-blue-800 flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> {tip}
                     </li>
@@ -615,15 +618,15 @@ export default function ChallengesPage() {
               <button
                 onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
                 disabled={currentStep === 0}
-                className="px-5 py-2.5 rounded-xl font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 transition"
+                className="px-5 py-2.5 rounded-xl font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 transition cursor-pointer"
               >
                 Previous Step
               </button>
 
-              {currentStep < eyeSteps.length - 1 ? (
+              {currentStep < EYE_STEPS.length - 1 ? (
                 <button
-                  onClick={() => setCurrentStep(prev => Math.min(eyeSteps.length - 1, prev + 1))}
-                  className="px-6 py-2.5 rounded-xl font-bold text-xs bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-1 shadow-sm"
+                  onClick={() => setCurrentStep(prev => Math.min(EYE_STEPS.length - 1, prev + 1))}
+                  className="px-6 py-2.5 rounded-xl font-bold text-xs bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-1 shadow-sm cursor-pointer"
                 >
                   Next Step <ArrowRight className="w-4 h-4" />
                 </button>
