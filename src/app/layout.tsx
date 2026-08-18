@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "Pencil Pilot | AI Drawing Scan & Art Critique",
   description: "Discover Pencil Pilot, a professional AI-driven drawing scan and art critique platform created by Harjass Digga.",
   verification: {
-    google: "25d4f3c4201af1f4",
+    google: "WhjTfub1GzTK-czyW1hlcB_kdpaEmzUUkJ2DzooEHXI",
   },
 };
 
