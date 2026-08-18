@@ -1,33 +1,34 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 export default function AuthCallbackPage() {
-  const router = useRouter()
-  const supabase = createClient()
+  const router = useRouter();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession()
+    async function handleAuthCallback() {
+      if (!supabase) return;
 
-      if (session && !error) {
-        localStorage.setItem('isLoggedIn', 'true')
-        router.push('/dashboard')
-      } else {
-        console.error('Callback Auth Error:', error?.message)
-        router.push('/onboarding')
+      const { error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Auth callback error:", error.message);
       }
+      
+      router.push('/dashboard');
     }
 
-    handleCallback()
-  }, [router, supabase])
+    handleAuthCallback();
+  }, [router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-slate-600 font-medium text-sm">Completing login...</p>
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+      <div className="text-center p-8 bg-white rounded-3xl border border-slate-200 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-800">Verifying session...</h2>
+        <p className="text-sm text-slate-500 mt-2">Please wait while we redirect you to your dashboard.</p>
+      </div>
     </div>
-  )
+  );
 }

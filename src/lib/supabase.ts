@@ -1,15 +1,15 @@
-import { createBrowserClient } from '@supabase/ssr'
+import { createBrowserClient } from '@supabase/ssr';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase Environment Variables in .env.local')
+  throw new Error('Missing Supabase Environment Variables in .env.local');
 }
 
 // Safe client creator function
 export function createClient() {
-  return createBrowserClient(supabaseUrl!, supabaseAnonKey!)
+  return createBrowserClient(supabaseUrl!, supabaseAnonKey!);
 }
 
 // Singleton instance for general use
@@ -55,10 +55,10 @@ export async function getUserData(userId: string = 'Harjass'): Promise<UserDataS
   if (supabase) {
     try {
       const { data, error } = await supabase
-        .from('profile')
+        .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         return {
@@ -98,17 +98,16 @@ export async function saveUserData(data: UserDataState, userId: string = 'Harjas
   if (supabase) {
     try {
       console.log("☁️ Supabase ko data bhej rahe hain... ID:", userId);
-      const { data: resData, error } = await supabase.from('profile').upsert({
+      const { data: resData, error } = await supabase.from('profiles').upsert({
         id: userId,
         total_points: data.totalPoints,
         completed_challenges: data.completedChallengeIds,
         challenge_progress: data.progress,
         last_daily_scan_reward: data.lastDailyScanRewardDate,
-        updated_at: new Date().toISOString(),
-      });
+      }, { onConflict: 'id' });
 
       if (error) {
-        console.error('❌ Supabase save error:', error);
+        console.error('❌ Supabase save error:', error.message, error.details);
       } else {
         console.log('🎉 Supabase par successfully save ho gaya!', resData);
       }
@@ -125,7 +124,7 @@ export async function getLeaderboardData() {
   if (!supabase) return [];
   try {
     const { data, error } = await supabase
-      .from('profile')
+      .from('profiles')
       .select('*')
       .order('total_points', { ascending: false });
 
