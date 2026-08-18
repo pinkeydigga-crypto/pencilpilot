@@ -57,8 +57,8 @@ export default function Home() {
         {/* Right Side Action Card */}
         <div className="relative max-w-sm w-full mx-auto">
           
-          {/* Animated Mascot */}
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20 animate-bounce">
+          {/* Animated Mascot (Position lowered to -top-6 to avoid overlapping text) */}
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 animate-bounce">
             <svg viewBox="0 0 100 80" className="w-20 h-16 drop-shadow-md">
               {/* Antenna / Pencil Element */}
               <polygon points="50,0 44,12 56,12" fill="#F59E0B" />

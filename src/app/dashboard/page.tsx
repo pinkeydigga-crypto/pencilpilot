@@ -189,7 +189,7 @@ export default function DashboardPage() {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 p-6 md:p-10 space-y-8 overflow-y-auto max-w-7xl mx-auto">
+      <main className="flex-1 p-4 md:p-10 space-y-8 overflow-y-auto max-w-7xl mx-auto w-full">
         <header className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Good morning, {userProfile.username || userProfile.name}! 👋</h1>
@@ -248,20 +248,20 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            <section className="bg-[#1f56ff] rounded-[28px] p-10 relative overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-center min-h-[280px] w-full shadow-sm">
-              <div className="space-y-3.5 max-w-[450px] z-10">
-                <div className="inline-block bg-white/20 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+            <section className="bg-gradient-to-br from-[#1f56ff] via-[#2563eb] to-[#3b82f6] rounded-[28px] p-6 md:p-10 relative overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-center min-h-[280px] w-full shadow-md">
+              <div className="space-y-3.5 max-w-[450px] z-10 text-center md:text-left mx-auto md:mx-0">
+                <div className="inline-block bg-white/20 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider backdrop-blur-sm">
                   AI SCAN
                 </div>
-                <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
                   Start scanning your drawing
                 </h2>
-                <p className="text-blue-100 text-[15px] font-medium">
+                <p className="text-blue-100 text-sm sm:text-[15px] font-medium">
                   Upload your drawing and get instant AI feedback with actionable tips.
                 </p>
               </div>
 
-              <div className="bg-transparent border border-dashed border-white/30 rounded-[20px] p-6 text-center z-10 w-[300px] h-[200px] flex flex-col justify-center items-center mx-auto lg:mx-0 shrink-0">
+              <div className="bg-gradient-to-b from-white/15 to-white/5 backdrop-blur-sm border border-dashed border-white/40 rounded-[20px] p-5 text-center z-10 w-full max-w-[300px] h-[200px] flex flex-col justify-center items-center mx-auto lg:mx-0 shrink-0 shadow-inner">
                 <div className="w-[44px] h-[44px] bg-white rounded-xl mx-auto flex items-center justify-center mb-3 shadow-sm">
                   <svg className="w-5 h-5 text-[#1f56ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
