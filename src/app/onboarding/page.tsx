@@ -53,10 +53,10 @@ export default function OnboardingPage() {
           data: {
             full_name: formData.name,
             username: formData.username,
-            art_style: formData.artStyle,
-            language: formData.language,
-            skill_level: formData.skillLevel,
-            goal: formData.goal,
+            art_style: formData.artStyle || 'Sketching',
+            language: formData.language || 'Hinglish',
+            skill_level: formData.skillLevel || 'Beginner',
+            goal: formData.goal || 'Improve Anatomy',
             instagram: formData.instagram,
           }
         }
@@ -65,18 +65,20 @@ export default function OnboardingPage() {
       if (authError) throw authError
 
       if (authData.user) {
-        await supabase.from('profiles').upsert({
+        const { error: profileError } = await supabase.from('profiles').upsert({
           id: authData.user.id,
           name: formData.name,
           username: formData.username,
           email: formData.email,
-          art_style: formData.artStyle,
-          language: formData.language,
-          skill_level: formData.skillLevel,
-          goal: formData.goal,
+          art_style: formData.artStyle || 'Sketching',
+          language: formData.language || 'Hinglish',
+          skill_level: formData.skillLevel || 'Beginner',
+          goal: formData.goal || 'Improve Anatomy',
           instagram: formData.instagram,
           updated_at: new Date(),
         })
+
+        if (profileError) throw profileError
       }
 
       localStorage.setItem('userName', formData.name)
@@ -97,36 +99,24 @@ export default function OnboardingPage() {
       {/* Background Dots Grid Pattern */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }} />
 
-      {/* Main Container Wrapper with Relative positioning for the corner robot */}
+      {/* Main Container Wrapper */}
       <div className="max-w-xl w-full relative pt-10">
 
-        {/* Side Waving Robot Mascot Positioned at Top-Left of the Card */}
+        {/* Side Waving Robot Mascot */}
         <div className="absolute -top-6 -left-4 sm:-left-10 z-20 flex items-center gap-2 pointer-events-none">
-          {/* Robot SVG */}
           <div className="w-16 h-16 relative flex items-center justify-center drop-shadow-lg">
             <svg viewBox="0 0 100 100" className="w-full h-full">
-              {/* Pencil Tip Antenna */}
               <polygon points="50,2 43,14 57,14" fill="#F59E0B" />
               <rect x="47" y="14" width="6" height="6" fill="white" />
-              
-              {/* Head */}
               <rect x="15" y="20" width="70" height="46" rx="23" fill="white" />
-              
-              {/* Visor Screen */}
               <rect x="22" y="26" width="56" height="34" rx="14" fill="#1E3A8A" />
-              
-              {/* Eyes */}
               <path d="M 35 43 Q 39 37 43 43" stroke="white" strokeWidth="4" strokeLinecap="round" fill="none" />
               <path d="M 57 43 Q 61 37 65 43" stroke="white" strokeWidth="4" strokeLinecap="round" fill="none" />
-              
-              {/* Body / Hands */}
               <circle cx="28" cy="72" r="7" fill="white" />
               <circle cx="72" cy="72" r="7" fill="white" />
               <rect x="38" y="66" width="24" height="10" rx="5" fill="#93C5FD" />
             </svg>
           </div>
-
-          {/* Welcome Speech Bubble */}
           <div className="bg-white text-blue-600 px-3.5 py-1.5 rounded-2xl text-xs font-black shadow-md tracking-wide uppercase relative">
             Welcome!
             <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-white rotate-45 rounded-xs" />
@@ -136,7 +126,6 @@ export default function OnboardingPage() {
         {/* Main Form Card */}
         <div className="bg-white/95 backdrop-blur-xl rounded-[2.5rem] border border-white/20 p-8 shadow-2xl shadow-blue-950/40 space-y-6 relative z-10">
           
-          {/* Top Progress */}
           <div className="flex items-center justify-between">
             <span className="text-xs font-black tracking-wider text-blue-600 uppercase">
               QUESTION {step} OF 5
@@ -146,7 +135,6 @@ export default function OnboardingPage() {
             </span>
           </div>
 
-          {/* Instruction Box */}
           <div className="bg-blue-50/70 p-4 rounded-2xl border border-blue-100/80">
             <p className="text-xs text-slate-700 font-semibold leading-relaxed text-center">
               {step === 1 && "Select your primary art style so I can give you custom critique."}
@@ -186,6 +174,7 @@ export default function OnboardingPage() {
                 ))}
               </div>
               <button 
+                type="button"
                 onClick={handleNext}
                 className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl shadow-xl transition-all text-sm flex items-center justify-center gap-2"
               >
@@ -218,8 +207,8 @@ export default function OnboardingPage() {
                 ))}
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all">Back</button>
-                <button onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all">Continue</button>
+                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all">Back</button>
+                <button type="button" onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all">Continue</button>
               </div>
             </div>
           )}
@@ -247,13 +236,13 @@ export default function OnboardingPage() {
                 ))}
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all">Back</button>
-                <button onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all">Continue</button>
+                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all">Back</button>
+                <button type="button" onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all">Continue</button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: Instagram Profile (Mandatory) */}
+          {/* STEP 4: Instagram Profile */}
           {step === 4 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">
@@ -276,13 +265,13 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div className="flex gap-3 pt-2">
-                <button onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all">Back</button>
-                <button onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all">Continue</button>
+                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all">Back</button>
+                <button type="button" onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all">Continue</button>
               </div>
             </div>
           )}
 
-          {/* STEP 5: Credentials, Username & Save */}
+          {/* STEP 5: Credentials & Save */}
           {step === 5 && (
             <form onSubmit={handleCompleteSignup} className="space-y-4">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">

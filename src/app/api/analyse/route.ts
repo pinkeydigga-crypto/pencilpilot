@@ -32,10 +32,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'GEMINI_API_KEY is not configured in environment variables' }, { status: 500 });
     }
 
+    const resolvedSkillLevel = skillLevel || 'Beginner';
+    const resolvedArtStyle = artStyle || 'Sketching';
+    const resolvedTopic = topic || 'General';
+
     const prompt = `Analyze this artwork/asset professionally. 
-    Skill Level: ${skillLevel || 'Medium'}
-    Art Style: ${artStyle || 'Comprehensive'}
-    Topic Focus: ${topic || 'General'}
+    Skill Level: ${resolvedSkillLevel}
+    Art Style: ${resolvedArtStyle}
+    Topic Focus: ${resolvedTopic}
     
     Provide the response strictly as a valid JSON object with the following keys:
     - artworkType (string)
@@ -70,7 +74,7 @@ export async function POST(request: Request) {
     } catch {
       parsedResult = {
         artworkType: "Visual Asset",
-        skillLevel: skillLevel || "Medium",
+        skillLevel: resolvedSkillLevel,
         score: 75,
         tier: "Provisional",
         strengths: ["Good visual foundation and composition."],
