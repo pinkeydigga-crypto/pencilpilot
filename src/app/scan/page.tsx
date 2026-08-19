@@ -19,7 +19,7 @@ export default function ScanPage() {
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [hasUploaded, setHasUploaded] = useState(false);
 
-  const [credits, setCredits] = useState<number>(4);
+  const [credits, setCredits] = useState<number>(2);
   const [timeLeft, setTimeLeft] = useState<string>('');
 
   useEffect(() => {
@@ -43,12 +43,12 @@ export default function ScanPage() {
 
     if (resetTime && now < Number(resetTime)) {
       if (savedCredits !== null) {
-        setCredits(Number(savedCredits) || 4);
+        setCredits(Number(savedCredits) || 2);
       }
       startCountdown(Number(resetTime), RESET_TIME_KEY, CREDITS_KEY);
     } else {
-      setCredits(4);
-      localStorage.setItem(CREDITS_KEY, '4');
+      setCredits(2);
+      localStorage.setItem(CREDITS_KEY, '2');
       localStorage.removeItem(RESET_TIME_KEY);
     }
   }, [userEmail]);
@@ -60,15 +60,15 @@ export default function ScanPage() {
 
       if (distance <= 0) {
         clearInterval(timer);
-        setCredits(4);
-        localStorage.setItem(creditsKey, '4');
+        setCredits(2);
+        localStorage.setItem(creditsKey, '2');
         localStorage.removeItem(resetKey);
         setTimeLeft('');
       } else {
         const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        setTimeLeft(`${hours}h ${minutes}m ${seconds}s until reset`);
+        setTimeLeft(`${hours}h ${minutes}m ${seconds}s until daily reset`);
       }
     }, 1000);
   };
@@ -114,7 +114,7 @@ export default function ScanPage() {
 
     const currentCredits = Number(credits) || 0;
     if (currentCredits <= 0) {
-      alert("Credits exhausted for today.");
+      alert("Daily credits exhausted. Resets in 24 hours.");
       return;
     }
 
@@ -227,8 +227,8 @@ export default function ScanPage() {
           
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
             <div className="bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-xl text-right">
-              <p className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">Credits Left</p>
-              <p className="text-xs font-black text-slate-900">{credits} / 4 Free Scans</p>
+              <p className="text-[9px] font-bold text-blue-600 uppercase tracking-wider">Daily Limit</p>
+              <p className="text-xs font-black text-slate-900">{credits} / 2 Free Scans Daily</p>
               {timeLeft && <p className="text-[9px] text-rose-500 font-medium">{timeLeft}</p>}
             </div>
             <button 
@@ -333,7 +333,7 @@ export default function ScanPage() {
                 className="relative overflow-hidden w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-xl shadow-blue-500/30 disabled:opacity-50 active:scale-[0.99] group"
               >
                 <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>
-                {isAnalyzing ? "Executing Pipeline..." : credits <= 0 ? "Credits Exhausted (Locked)" : "Start Exclusive Scan"}
+                {isAnalyzing ? "Executing Pipeline..." : credits <= 0 ? "Daily Scans Exhausted (Resets in 24h)" : "Start Exclusive Scan"}
               </button>
 
             </form>

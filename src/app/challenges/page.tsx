@@ -80,6 +80,30 @@ const EYE_STEPS: TutorialStep[] = [
   }
 ];
 
+const LINES_STEPS: TutorialStep[] = [
+  {
+    step: 1,
+    title: "Vertical Lines Practice",
+    instruction: "Draw parallel vertical lines from top to bottom across the entire page with steady, even spacing.",
+    tips: ["Keep your hand relaxed", "Draw from the elbow/shoulder, not just the wrist"],
+    svgType: "vertical-lines"
+  },
+  {
+    step: 2,
+    title: "Horizontal Lines Practice",
+    instruction: "Cross your vertical lines by drawing straight, parallel horizontal lines from left to right across the page.",
+    tips: ["Maintain equal distance between lines", "Keep strokes confident and smooth"],
+    svgType: "horizontal-lines"
+  },
+  {
+    step: 3,
+    title: "Full Page Grid Mastery",
+    instruction: "Fill the entire page uniformly with alternating vertical and vice versa horizontal lines to build hand control.",
+    tips: ["Don't rush the process", "Focus on consistent line pressure"],
+    svgType: "grid-lines"
+  }
+];
+
 export default function ChallengesPage() {
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(true);
@@ -91,10 +115,9 @@ export default function ChallengesPage() {
   const [rank, setRank] = useState<number>(1);
   const [completedChallenges, setCompletedChallenges] = useState<string[]>([]);
   
-  // View state: 'hub' or 'learning'
-  const [activeView, setActiveView] = useState<'hub' | 'learning'>('hub');
+  // View state: 'hub' or active challenge id
+  const [activeView, setActiveView] = useState<'hub' | 'eye-drawing-1min' | 'lines-practice'>('hub');
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [isCompleted, setIsCompleted] = useState<boolean>(false);
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
@@ -168,9 +191,6 @@ export default function ChallengesPage() {
       setLastActivityDate(userData.last_activity_date || null);
       const comp = userData.completed_challenges || [];
       setCompletedChallenges(comp);
-      if (comp.includes('eye-drawing-1min')) {
-        setIsCompleted(true);
-      }
     }
 
     await refreshLeaderboard(currentUserId);
@@ -205,10 +225,13 @@ export default function ChallengesPage() {
   }, [router, processUserData]);
 
   // Handle challenge submission
-  const handleFinishChallenge = async () => {
+  const handleFinishChallenge = async (challengeId: string, rewardXp: number) => {
     if (!userId) return;
 
-    if (isCompleted) {
+    const alreadyCompleted = completedChallenges.includes(challengeId);
+    
+    // If already completed, do not give XP again, just return to hub
+    if (alreadyCompleted) {
       setActiveView('hub');
       return;
     }
@@ -234,14 +257,13 @@ export default function ChallengesPage() {
       }
     }
 
-    const newXp = totalXp + 100;
-    const updatedCompleted = [...completedChallenges, 'eye-drawing-1min'];
+    const newXp = totalXp + rewardXp;
+    const updatedCompleted = [...completedChallenges, challengeId];
     
     setTotalXp(newXp);
     setStreak(newStreak);
     setLastActivityDate(today);
     setCompletedChallenges(updatedCompleted);
-    setIsCompleted(true);
     setActiveView('hub');
 
     if (supabase) {
@@ -272,41 +294,93 @@ export default function ChallengesPage() {
     return (
       <div className="w-full h-full flex items-center justify-center p-6">
         <svg viewBox="0 0 200 120" className="w-48 h-32 drop-shadow-sm">
-          <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
-          {(type !== 'outline') && (
+          {type === 'vertical-lines' && (
+            <g stroke="#2563EB" strokeWidth="2" strokeLinecap="round">
+              <line x1="40" y1="15" x2="40" y2="105" />
+              <line x1="60" y1="15" x2="60" y2="105" />
+              <line x1="80" y1="15" x2="80" y2="105" />
+              <line x1="100" y1="15" x2="100" y2="105" />
+              <line x1="120" y1="15" x2="120" y2="105" />
+              <line x1="140" y1="15" x2="140" y2="105" />
+              <line x1="160" y1="15" x2="160" y2="105" />
+            </g>
+          )}
+          {type === 'horizontal-lines' && (
+            <g stroke="#2563EB" strokeWidth="2" strokeLinecap="round">
+              <line x1="20" y1="25" x2="180" y2="25" />
+              <line x1="20" y1="40" x2="180" y2="40" />
+              <line x1="20" y1="55" x2="180" y2="55" />
+              <line x1="20" y1="70" x2="180" y2="70" />
+              <line x1="20" y1="85" x2="180" y2="85" />
+              <line x1="20" y1="100" x2="180" y2="100" />
+            </g>
+          )}
+          {type === 'grid-lines' && (
+            <g stroke="#2563EB" strokeWidth="2" strokeLinecap="round" opacity="0.9">
+              <line x1="40" y1="15" x2="40" y2="105" />
+              <line x1="80" y1="15" x2="80" y2="105" />
+              <line x1="120" y1="15" x2="120" y2="105" />
+              <line x1="160" y1="15" x2="160" y2="105" />
+              <line x1="20" y1="30" x2="180" y2="30" />
+              <line x1="20" y1="60" x2="180" y2="60" />
+              <line x1="20" y1="90" x2="180" y2="90" />
+            </g>
+          )}
+          {type === 'outline' && (
+            <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
+          )}
+          {type === 'iris' && (
             <>
-              <circle cx="100" cy="60" r="28" fill={type === 'shading' || type === 'final' ? "#1E40AF" : "none"} stroke="#2563EB" strokeWidth="2" opacity={type === 'shading' || type === 'final' ? "0.2" : "1"} />
+              <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
+              <circle cx="100" cy="60" r="28" stroke="#2563EB" strokeWidth="2" fill="none" />
               <circle cx="100" cy="60" r="12" fill="#1E3A8A" />
               <circle cx="93" cy="53" r="3.5" fill="#FFFFFF" />
             </>
           )}
-          {(['eyelids', 'eyelashes', 'shading', 'final'].includes(type)) && (
-            <path d="M35 42 C 75 22, 125 22, 165 42" fill="none" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round" />
-          )}
-          {(['eyelashes', 'shading', 'final'].includes(type)) && (
-            <g stroke="#1E3A8A" strokeWidth="2" strokeLinecap="round">
-              <line x1="45" y1="50" x2="38" y2="38" />
-              <line x1="65" y1="36" x2="62" y2="23" />
-              <line x1="85" y1="32" x2="86" y2="17" />
-              <line x1="115" y1="32" x2="114" y2="17" />
-              <line x1="135" y1="36" x2="138" y2="23" />
-              <line x1="155" y1="50" x2="162" y2="38" />
-            </g>
-          )}
-          {(['shading', 'final'].includes(type)) && (
+          {type === 'eyelids' && (
             <>
+              <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
+              <circle cx="100" cy="60" r="28" stroke="#2563EB" strokeWidth="2" fill="none" />
+              <circle cx="100" cy="60" r="12" fill="#1E3A8A" />
+              <circle cx="93" cy="53" r="3.5" fill="#FFFFFF" />
+              <path d="M35 42 C 75 22, 125 22, 165 42" fill="none" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round" />
+            </>
+          )}
+          {type === 'eyelashes' && (
+            <>
+              <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
+              <circle cx="100" cy="60" r="28" stroke="#2563EB" strokeWidth="2" fill="none" />
+              <circle cx="100" cy="60" r="12" fill="#1E3A8A" />
+              <circle cx="93" cy="53" r="3.5" fill="#FFFFFF" />
+              <path d="M35 42 C 75 22, 125 22, 165 42" fill="none" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round" />
+              <g stroke="#1E3A8A" strokeWidth="2" strokeLinecap="round">
+                <line x1="45" y1="50" x2="38" y2="38" />
+                <line x1="65" y1="36" x2="62" y2="23" />
+                <line x1="85" y1="32" x2="86" y2="17" />
+                <line x1="115" y1="32" x2="114" y2="17" />
+                <line x1="135" y1="36" x2="138" y2="23" />
+                <line x1="155" y1="50" x2="162" y2="38" />
+              </g>
+            </>
+          )}
+          {type === 'shading' && (
+            <>
+              <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
+              <circle cx="100" cy="60" r="28" fill="#1E40AF" opacity="0.2" stroke="#2563EB" strokeWidth="2" />
+              <circle cx="100" cy="60" r="12" fill="#1E3A8A" />
+              <circle cx="93" cy="53" r="3.5" fill="#FFFFFF" />
+              <path d="M35 42 C 75 22, 125 22, 165 42" fill="none" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round" />
               <path d="M20 60 C 60 105, 140 105, 180 60 C 140 85, 60 85, 20 60 Z" fill="#93C5FD" opacity="0.4" />
-              <circle cx="100" cy="60" r="28" fill="url(#grad)" opacity="0.6" />
-              <defs>
-                <radialGradient id="grad" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#1E3A8A" stopOpacity="1" />
-                </radialGradient>
-              </defs>
             </>
           )}
           {type === 'final' && (
-            <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#1E3A8A" strokeWidth="3.5" />
+            <>
+              <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#1E3A8A" strokeWidth="3.5" />
+              <circle cx="100" cy="60" r="28" fill="#1E40AF" opacity="0.3" stroke="#2563EB" strokeWidth="2" />
+              <circle cx="100" cy="60" r="12" fill="#1E3A8A" />
+              <circle cx="93" cy="53" r="3.5" fill="#FFFFFF" />
+              <path d="M35 42 C 75 22, 125 22, 165 42" fill="none" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round" />
+            </>
           )}
         </svg>
       </div>
@@ -323,6 +397,11 @@ export default function ChallengesPage() {
       </div>
     );
   }
+
+  const currentStepsList = activeView === 'lines-practice' ? LINES_STEPS : EYE_STEPS;
+  const currentChallengeId = activeView === 'lines-practice' ? 'lines-practice' : 'eye-drawing-1min';
+  const currentChallengeReward = activeView === 'lines-practice' ? 50 : 100;
+  const isCurrentCompleted = completedChallenges.includes(currentChallengeId);
 
   return (
     <div className="min-h-screen font-sans bg-gradient-to-br from-blue-600 to-blue-800 text-slate-900 p-4 md:p-10 flex flex-col items-center">
@@ -389,7 +468,7 @@ export default function ChallengesPage() {
               </div>
             </div>
 
-            {/* Featured Challenge Card */}
+            {/* Featured Challenge Card 1: Eye Drawing */}
             <div className="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-slate-200 space-y-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl uppercase tracking-wider shadow-sm flex items-center gap-1">
                 <Sparkles className="w-3 h-3" /> Featured Masterclass
@@ -422,14 +501,62 @@ export default function ChallengesPage() {
 
                 <div className="w-full md:w-auto flex flex-col gap-2 items-center">
                   <button
-                    onClick={() => { setActiveView('learning'); setCurrentStep(0); }}
+                    onClick={() => { setActiveView('eye-drawing-1min'); setCurrentStep(0); }}
                     className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-md transition text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {isCompleted ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
+                    {completedChallenges.includes('eye-drawing-1min') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
                   </button>
-                  {isCompleted && (
+                  {completedChallenges.includes('eye-drawing-1min') && (
                     <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
                       <CheckCircle className="w-3.5 h-3.5" /> Completed (+100 XP Claimed)
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Featured Challenge Card 2: Vertical & Horizontal Lines Practice */}
+            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-slate-200 space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl uppercase tracking-wider shadow-sm flex items-center gap-1">
+                <Sparkles className="w-3 h-3" /> Skill Builder
+              </div>
+
+              <div className="flex flex-col md:flex-row gap-6 items-center pt-2 md:pt-0">
+                <div className="w-28 h-24 bg-emerald-50 rounded-2xl flex items-center justify-center border border-emerald-100 flex-shrink-0 overflow-hidden shadow-inner">
+                  <svg viewBox="0 0 200 120" className="w-24 h-16">
+                    <line x1="60" y1="15" x2="60" y2="105" stroke="#059669" strokeWidth="3" />
+                    <line x1="100" y1="15" x2="100" y2="105" stroke="#059669" strokeWidth="3" />
+                    <line x1="140" y1="15" x2="140" y2="105" stroke="#059669" strokeWidth="3" />
+                    <line x1="30" y1="45" x2="170" y2="45" stroke="#059669" strokeWidth="3" />
+                    <line x1="30" y1="75" x2="170" y2="75" stroke="#059669" strokeWidth="3" />
+                  </svg>
+                </div>
+
+                <div className="space-y-2 flex-1 text-center md:text-left">
+                  <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                    <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg">Foundation</span>
+                    <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-lg">+50 XP Reward</span>
+                    <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> 3 Minutes
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl md:text-2xl font-black text-slate-900">Vertical & Horizontal Lines Practice</h3>
+                  <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                    Practice drawing straight vertical and vice versa horizontal lines across the entire page to build steady hand control and precision.
+                  </p>
+                </div>
+
+                <div className="w-full md:w-auto flex flex-col gap-2 items-center">
+                  <button
+                    onClick={() => { setActiveView('lines-practice'); setCurrentStep(0); }}
+                    className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-md transition text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {completedChallenges.includes('lines-practice') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
+                  </button>
+                  {completedChallenges.includes('lines-practice') && (
+                    <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle className="w-3.5 h-3.5" /> Completed (+50 XP Claimed)
                     </span>
                   )}
                 </div>
@@ -578,9 +705,9 @@ export default function ChallengesPage() {
             <div className="flex justify-between items-center border-b border-slate-100 pb-4">
               <div>
                 <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-lg uppercase">
-                  Step {currentStep + 1} of {EYE_STEPS.length}
+                  Step {currentStep + 1} of {currentStepsList.length}
                 </span>
-                <h3 className="text-xl font-black text-slate-900 mt-1">{EYE_STEPS[currentStep].title}</h3>
+                <h3 className="text-xl font-black text-slate-900 mt-1">{currentStepsList[currentStep].title}</h3>
               </div>
               <button 
                 onClick={() => setActiveView('hub')}
@@ -592,19 +719,19 @@ export default function ChallengesPage() {
 
             {/* Step Illustration */}
             <div className="w-full h-56 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center shadow-inner">
-              {renderStepIllustration(EYE_STEPS[currentStep].svgType)}
+              {renderStepIllustration(currentStepsList[currentStep].svgType)}
             </div>
 
             {/* Instructions & Tips */}
             <div className="space-y-4">
               <p className="text-sm md:text-base text-slate-700 font-medium leading-relaxed">
-                {EYE_STEPS[currentStep].instruction}
+                {currentStepsList[currentStep].instruction}
               </p>
 
               <div className="bg-blue-50/60 border border-blue-100 p-4 rounded-2xl space-y-2">
                 <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wider">Pro Tips:</h4>
                 <ul className="space-y-1">
-                  {EYE_STEPS[currentStep].tips.map((tip, idx) => (
+                  {currentStepsList[currentStep].tips.map((tip, idx) => (
                     <li key={idx} className="text-xs text-blue-800 flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> {tip}
                     </li>
@@ -623,9 +750,9 @@ export default function ChallengesPage() {
                 Previous Step
               </button>
 
-              {currentStep < EYE_STEPS.length - 1 ? (
+              {currentStep < currentStepsList.length - 1 ? (
                 <button
-                  onClick={() => setCurrentStep(prev => Math.min(EYE_STEPS.length - 1, prev + 1))}
+                  onClick={() => setCurrentStep(prev => Math.min(currentStepsList.length - 1, prev + 1))}
                   className="px-6 py-2.5 rounded-xl font-bold text-xs bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-1 shadow-sm cursor-pointer"
                 >
                   Next Step <ArrowRight className="w-4 h-4" />
@@ -633,11 +760,11 @@ export default function ChallengesPage() {
               ) : (
                 <button
                   onClick={async () => {
-                    await handleFinishChallenge();
+                    await handleFinishChallenge(currentChallengeId, currentChallengeReward);
                   }}
                   className="px-6 py-3 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-2 shadow-md cursor-pointer"
                 >
-                  <Check className="w-4 h-4" /> Finish & Claim +100 XP
+                  <Check className="w-4 h-4" /> {isCurrentCompleted ? 'Finish & Return' : `Finish & Claim +${currentChallengeReward} XP`}
                 </button>
               )}
             </div>

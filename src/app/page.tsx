@@ -45,12 +45,12 @@ export default function Home() {
 
           {/* Main Hero Headings */}
           <h1 className="text-6xl md:text-7xl font-black tracking-tight leading-none">
-            Make it finally <br />
-            <span className="text-blue-200">click.</span>
+            Make every <br />
+            <span className="text-blue-200">drawing better.</span>
           </h1>
           
           <p className="text-blue-100 text-xl md:text-2xl font-medium">
-            Instant AI feedback to level up your art.
+            Learn art through fun challenges and get instant AI feedback on your creations.
           </p>
         </div>
 

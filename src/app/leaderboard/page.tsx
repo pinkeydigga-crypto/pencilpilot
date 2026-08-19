@@ -43,6 +43,27 @@ const drawRoundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: n
   }
 };
 
+// Helper function to wrap text neatly on the canvas
+const wrapText = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+  const words = text.split(' ');
+  let line = '';
+  let currentY = y;
+
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + ' ';
+    const metrics = ctx.measureText(testLine);
+    const testWidth = metrics.width;
+    if (testWidth > maxWidth && n > 0) {
+      ctx.fillText(line, x, currentY);
+      line = words[n] + ' ';
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, currentY);
+};
+
 export default function LeaderboardPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string>("");
@@ -160,12 +181,10 @@ export default function LeaderboardPage() {
     ctx.font = '600 28px sans-serif';
     ctx.fillText('AI Drawing Coach', 120, 160);
 
-    // Tagline
+    // Updated Tagline: Featured in leaderboard message
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '900 82px sans-serif';
-    ctx.fillText('Make it', 120, 340);
-    ctx.fillText('finally', 120, 440);
-    ctx.fillText('click.', 120, 540);
+    ctx.font = '900 56px sans-serif';
+    wrapText(ctx, `Featured in Pencil Pilot's leaderboard with #${userRank} rank.`, 120, 310, 380, 72);
 
     // Card Container (White)
     const cardX = 540;
