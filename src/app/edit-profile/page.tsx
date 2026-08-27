@@ -19,19 +19,62 @@ export default function EditProfilePage() {
     avatar_seed: 'artist'
   });
 
-  // 1. Fetch Logged-In User ID Dynamically
+  // 1. Fetch Logged-In User ID Dynamically with Robust Session Handling
   useEffect(() => {
-    async function fetchUser() {
-      if (!supabase) return;
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-      } else {
-        console.error("No authenticated user found", error);
-        router.push('/login');
+    if (!supabase) return;
+
+    let isMounted = true;
+
+    // Realtime auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+      if (session?.user) {
+        setUserId(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        router.push('/');
+      }
+    });
+
+    async function verifyUser() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && isMounted) {
+          setUserId(user.id);
+          return;
+        }
+
+        // Retry after a short delay if session takes time to load
+        setTimeout(async () => {
+          const { data: { user: retryUser } } = await supabase.auth.getUser();
+          if (retryUser && isMounted) {
+            setUserId(retryUser.id);
+          } else {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user && isMounted) {
+              setUserId(session.user.id);
+            } else if (isMounted) {
+              // Check if token really exists in storage before kicking out
+              let hasToken = false;
+              if (typeof window !== 'undefined') {
+                hasToken = Object.keys(localStorage).some(key => key.includes('supabase.auth.token') || key.includes('-auth-token'));
+              }
+              if (!hasToken) {
+                router.push('/');
+              }
+            }
+          }
+        }, 1500);
+      } catch (err) {
+        console.error("Auth verify error:", err);
       }
     }
-    fetchUser();
+
+    verifyUser();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [router]);
 
   // 2. Load Profile Data for Logged-In User
@@ -64,7 +107,7 @@ export default function EditProfilePage() {
 
   const handleSave = async () => {
     if (!supabase || !userId) {
-      alert("User not logged in!");
+      alert("User session not ready yet. Please wait a second.");
       return;
     }
     setLoading(true);
@@ -90,24 +133,29 @@ export default function EditProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6 md:p-10 flex justify-center">
+    <div className="min-h-screen bg-[#F1F3F6] p-6 md:p-10 flex justify-center font-sans text-slate-900">
       <div className="max-w-xl w-full bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 mb-6 hover:text-slate-900 cursor-pointer">
-          <ArrowLeft className="w-4 h-4" /> Back
+        <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 mb-6 hover:text-slate-900 cursor-pointer font-medium text-sm transition">
+          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </button>
         
-        <h1 className="text-2xl font-bold mb-6">Edit Profile</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-black text-[#1E2A44]">Edit Profile</h1>
+          <span className="text-xs font-bold text-[#FF8A00] bg-orange-50 px-3 py-1 rounded-full uppercase tracking-wider">
+            DoodleFox Studio
+          </span>
+        </div>
 
         {/* Live Avatar Preview */}
         <div className="flex items-center gap-4 mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
           <img 
             src={`https://api.dicebear.com/7.x/bottts/svg?seed=${formData.avatar_seed}`} 
             alt="Avatar" 
-            className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200 p-1 shadow-sm"
+            className="w-16 h-16 rounded-2xl bg-orange-50 border border-orange-200 p-1 shadow-sm"
           />
           <div>
-            <h3 className="font-bold text-slate-800">{formData.name || 'Pencil Pilot User'}</h3>
-            <p className="text-xs text-slate-500">Live Avatar Preview</p>
+            <h3 className="font-bold text-slate-800">{formData.name || 'DoodleFox Artist'}</h3>
+            <p className="text-xs text-[#FF8A00] font-medium">Live Avatar Preview</p>
           </div>
         </div>
 
@@ -120,7 +168,7 @@ export default function EditProfilePage() {
                 key={seed}
                 type="button"
                 onClick={() => setFormData({...formData, avatar_seed: seed})}
-                className={`p-1 rounded-2xl border-2 transition cursor-pointer ${formData.avatar_seed === seed ? 'border-blue-500 bg-blue-50 scale-105' : 'border-transparent hover:border-slate-200'}`}
+                className={`p-1 rounded-2xl border-2 transition cursor-pointer ${formData.avatar_seed === seed ? 'border-[#FF8A00] bg-orange-50 scale-105 shadow-sm' : 'border-slate-100 hover:border-slate-300'}`}
               >
                 <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`} alt="avatar" className="w-full h-auto" />
               </button>
@@ -133,33 +181,37 @@ export default function EditProfilePage() {
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Name</label>
             <input 
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-800"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FF8A00] focus:border-[#FF8A00] outline-none text-slate-800 font-medium transition"
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
+              placeholder="Enter your name"
             />
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Art Style</label>
             <input 
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-800"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FF8A00] focus:border-[#FF8A00] outline-none text-slate-800 font-medium transition"
               value={formData.artStyle}
               onChange={(e) => setFormData({...formData, artStyle: e.target.value})}
+              placeholder="e.g. Sketching, Anime, Portrait"
             />
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Skill Level</label>
             <input 
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-800"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FF8A00] focus:border-[#FF8A00] outline-none text-slate-800 font-medium transition"
               value={formData.skillLevel}
               onChange={(e) => setFormData({...formData, skillLevel: e.target.value})}
+              placeholder="e.g. Beginner, Intermediate, Pro"
             />
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Goal</label>
             <input 
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-800"
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FF8A00] focus:border-[#FF8A00] outline-none text-slate-800 font-medium transition"
               value={formData.goal}
               onChange={(e) => setFormData({...formData, goal: e.target.value})}
+              placeholder="e.g. Improve Anatomy, Daily Shading Practice"
             />
           </div>
         </div>
@@ -167,9 +219,9 @@ export default function EditProfilePage() {
         <button 
           onClick={handleSave}
           disabled={loading}
-          className="w-full mt-8 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 flex items-center justify-center gap-2 cursor-pointer transition shadow-md"
+          className="w-full mt-8 bg-[#FF8A00] text-white py-3.5 rounded-xl font-bold hover:bg-[#e07900] flex items-center justify-center gap-2 cursor-pointer transition shadow-md"
         >
-          {loading ? "Saving..." : <><Save className="w-4 h-4" /> Save Profile</>}
+          {loading ? "Saving Profile..." : <><Save className="w-4 h-4" /> Save Profile Details</>}
         </button>
       </div>
     </div>

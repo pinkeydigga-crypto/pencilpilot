@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -59,7 +60,6 @@ export default function OnboardingPage() {
       if (authError) throw authError
 
       if (authData.user) {
-        // Upserting strictly only core columns guaranteed to exist
         const { error: profileError } = await supabase.from('profiles').upsert({
           id: authData.user.id,
           name: formData.name,
@@ -69,7 +69,6 @@ export default function OnboardingPage() {
         if (profileError) throw profileError
       }
 
-      // Instant session flags for seamless navigation
       localStorage.setItem('isLoggedIn', 'true')
       localStorage.setItem('userName', formData.name)
       localStorage.setItem('userUsername', formData.username)
@@ -84,53 +83,74 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#2563EB] flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-[#E8ECF2] flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
       
-      {/* Background Dots Grid Pattern */}
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }} />
+      {/* Minimal, Subtle, Tiny Art Pattern matching reference density & transparency */}
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none opacity-25" 
+        style={{ 
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='none' stroke='%23475569' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C!-- Tiny Pencil --%3E%3Cpath d='M40 50l16-16 5 5-16 16-7 2 2-7z'/%3E%3Cpath d='M50 40l5 5'/%3E%3C!-- Tiny Paint Brush --%3E%3Cpath d='M160 45c-1 1-2 3-2 5l-8 8c-1 1-1 3 0 4s3 1 4 0l8-8c1 0 3-1 4-2l-6-7z'/%3E%3Cpath d='M150 58l-5 5c-2 2-2 5 0 7s5 2 7 0l5-5'/%3E%3C!-- Tiny Paint Palette --%3E%3Cpath d='M45 160c-8 0-14 6-14 13s6 11 11 11c3 0 5-2 5-5 0-2-1-3-1-4 0-3 2-5 5-5 5 0 8-4 8-9 0-6-6-9-14-9z'/%3E%3Ccircle cx='40' cy='168' r='1.5' fill='%23475569'/%3E%3Ccircle cx='48' cy='164' r='1.5' fill='%23475569'/%3E%3Ccircle cx='54' cy='170' r='1.5' fill='%23475569'/%3E%3C!-- Another Tiny Pencil diagonal --%3E%3Cpath d='M140 150l16-16 5 5-16 16-7 2 2-7z'/%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundSize: '220px 220px'
+        }} 
+      />
 
-      {/* Main Container Wrapper */}
-      <div className="max-w-xl w-full relative pt-10">
+      {/* Main Container Wrapper with proper top padding */}
+      <div className="max-w-xl w-full relative pt-20">
 
-        {/* Side Waving Robot Mascot */}
-        <div className="absolute -top-6 -left-4 sm:-left-10 z-20 flex items-center gap-2 pointer-events-none">
-          <div className="w-16 h-16 relative flex items-center justify-center drop-shadow-lg">
-            <svg viewBox="0 0 100 100" className="w-full h-full">
-              <polygon points="50,2 43,14 57,14" fill="#F59E0B" />
-              <rect x="47" y="14" width="6" height="6" fill="white" />
-              <rect x="15" y="20" width="70" height="46" rx="23" fill="white" />
-              <rect x="22" y="26" width="56" height="34" rx="14" fill="#1E3A8A" />
-              <path d="M 35 43 Q 39 37 43 43" stroke="white" strokeWidth="4" strokeLinecap="round" fill="none" />
-              <path d="M 57 43 Q 61 37 65 43" stroke="white" strokeWidth="4" strokeLinecap="round" fill="none" />
-              <circle cx="28" cy="72" r="7" fill="white" />
-              <circle cx="72" cy="72" r="7" fill="white" />
-              <rect x="38" y="66" width="24" height="10" rx="5" fill="#93C5FD" />
-            </svg>
+        {/* Side Waving Mascot */}
+        <div className="absolute top-2 -left-2 sm:-left-6 z-20 flex items-center gap-2 pointer-events-none">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 relative flex items-center justify-center drop-shadow-md">
+            <Image 
+              src="https://cdn.corenexis.com/f/9YeR8BOGZFJ.png" 
+              alt="DoodleFox Mascot" 
+              fill 
+              unoptimized
+              className="object-contain mix-blend-multiply"
+            />
           </div>
-          <div className="bg-white text-blue-600 px-3.5 py-1.5 rounded-2xl text-xs font-black shadow-md tracking-wide uppercase relative">
-            Welcome!
-            <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-white rotate-45 rounded-xs" />
+          <div className="bg-[#1E2A44] text-white px-3.5 py-1.5 rounded-2xl text-[11px] sm:text-xs font-black shadow-md tracking-wide uppercase relative">
+            Welcome to DoodleFox!
+            <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-[#1E2A44] rotate-45 rounded-xs" />
           </div>
         </div>
 
         {/* Main Form Card */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-[2.5rem] border border-white/20 p-8 shadow-2xl shadow-blue-950/40 space-y-6 relative z-10">
+        <div className="bg-white/95 backdrop-blur-xl rounded-[2.5rem] border border-slate-200 p-8 shadow-xl shadow-slate-200/50 space-y-6 relative z-10">
           
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-black tracking-wider text-blue-600 uppercase">
-              QUESTION {step} OF 4
-            </span>
-            <span className="text-xs font-extrabold text-slate-400">
-              {Math.round((step / 4) * 100)}% COMPLETED
-            </span>
+          {/* Top Back Button & Progress Bars Indicator */}
+          <div className="flex items-center gap-4">
+            {step > 1 ? (
+              <button 
+                type="button" 
+                onClick={handlePrev}
+                className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition-all cursor-pointer shrink-0"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+            ) : (
+              <div className="w-10 shrink-0" />
+            )}
+
+            <div className="flex-1 grid grid-cols-4 gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div 
+                  key={i} 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    i <= step ? 'bg-[#FF8A00]' : 'bg-slate-100'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
 
-          <div className="bg-blue-50/70 p-4 rounded-2xl border border-blue-100/80">
+          <div className="bg-orange-50/70 p-4 rounded-2xl border border-orange-100/80">
             <p className="text-xs text-slate-700 font-semibold leading-relaxed text-center">
-              {step === 1 && "Select your primary art style so I can give you custom critique."}
-              {step === 2 && "Tell me your current skill level to adjust feedback depth."}
+              {step === 1 && "Select your primary art style so DoodleFox can give you custom critique."}
+              {step === 2 && "Tell us your current skill level to adjust feedback depth."}
               {step === 3 && "What is your main drawing goal right now?"}
-              {step === 4 && "Almost done! Enter your account details to save your profile."}
+              {step === 4 && "Almost done! Enter your account details to save your DoodleFox profile."}
             </p>
           </div>
 
@@ -143,7 +163,7 @@ export default function OnboardingPage() {
           {/* STEP 1: Art Style */}
           {step === 1 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-2xl font-black text-[#1E2A44] tracking-tight">
                 What is your primary art style?
               </h2>
               <div className="grid grid-cols-2 gap-3.5">
@@ -154,7 +174,7 @@ export default function OnboardingPage() {
                     onClick={() => setFormData({...formData, artStyle: style})}
                     className={`py-4 px-5 rounded-2xl border text-sm font-bold transition-all text-left ${
                       formData.artStyle === style 
-                        ? 'border-blue-600 bg-blue-50/50 text-blue-600 shadow-md scale-[1.02]' 
+                        ? 'border-[#FF8A00] bg-orange-50/50 text-[#FF8A00] shadow-md scale-[1.02]' 
                         : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
@@ -165,7 +185,7 @@ export default function OnboardingPage() {
               <button 
                 type="button"
                 onClick={handleNext}
-                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl shadow-xl transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-4 bg-[#FF8A00] hover:bg-[#e07900] text-white font-extrabold rounded-2xl shadow-lg transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Continue</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
@@ -176,7 +196,7 @@ export default function OnboardingPage() {
           {/* STEP 2: Skill Level */}
           {step === 2 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-2xl font-black text-[#1E2A44] tracking-tight">
                 What is your current skill level?
               </h2>
               <div className="space-y-3">
@@ -187,7 +207,7 @@ export default function OnboardingPage() {
                     onClick={() => setFormData({...formData, skillLevel: level})}
                     className={`w-full py-4 px-5 rounded-2xl border text-sm font-bold transition-all text-left ${
                       formData.skillLevel === level 
-                        ? 'border-blue-600 bg-blue-50/50 text-blue-600 shadow-md scale-[1.01]' 
+                        ? 'border-[#FF8A00] bg-orange-50/50 text-[#FF8A00] shadow-md scale-[1.01]' 
                         : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
@@ -195,17 +215,21 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all cursor-pointer">Back</button>
-                <button type="button" onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all cursor-pointer">Continue</button>
-              </div>
+              <button 
+                type="button"
+                onClick={handleNext}
+                className="w-full py-4 bg-[#FF8A00] hover:bg-[#e07900] text-white font-extrabold rounded-2xl shadow-lg transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Continue</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </button>
             </div>
           )}
 
           {/* STEP 3: Goal */}
           {step === 3 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-2xl font-black text-[#1E2A44] tracking-tight">
                 What do you want to improve most?
               </h2>
               <div className="space-y-3">
@@ -216,7 +240,7 @@ export default function OnboardingPage() {
                     onClick={() => setFormData({...formData, goal})}
                     className={`w-full py-4 px-5 rounded-2xl border text-sm font-bold transition-all text-left ${
                       formData.goal === goal 
-                        ? 'border-blue-600 bg-blue-50/50 text-blue-600 shadow-md scale-[1.01]' 
+                        ? 'border-[#FF8A00] bg-orange-50/50 text-[#FF8A00] shadow-md scale-[1.01]' 
                         : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
@@ -224,17 +248,21 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all cursor-pointer">Back</button>
-                <button type="button" onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all cursor-pointer">Continue</button>
-              </div>
+              <button 
+                type="button"
+                onClick={handleNext}
+                className="w-full py-4 bg-[#FF8A00] hover:bg-[#e07900] text-white font-extrabold rounded-2xl shadow-lg transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Continue</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </button>
             </div>
           )}
 
-          {/* STEP 4: Credentials & Save (Directly shifted from step 5) */}
+          {/* STEP 4: Credentials & Save */}
           {step === 4 && (
             <form onSubmit={handleCompleteSignup} className="space-y-4" autoComplete="off">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-2xl font-black text-[#1E2A44] tracking-tight">
                 Save your account details
               </h2>
               
@@ -247,7 +275,7 @@ export default function OnboardingPage() {
                   value={formData.username}
                   onChange={(e) => setFormData({...formData, username: e.target.value})}
                   placeholder="e.g. alex_artist"
-                  className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-slate-50/50 text-slate-800"
+                  className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-[#FF8A00] bg-slate-50/50 text-slate-800"
                 />
               </div>
 
@@ -260,7 +288,7 @@ export default function OnboardingPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="e.g. Alex Artist"
-                  className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-slate-50/50 text-slate-800"
+                  className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-[#FF8A00] bg-slate-50/50 text-slate-800"
                 />
               </div>
 
@@ -273,7 +301,7 @@ export default function OnboardingPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   placeholder="e.g. alex@example.com"
-                  className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-slate-50/50 text-slate-800"
+                  className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-[#FF8A00] bg-slate-50/50 text-slate-800"
                 />
               </div>
 
@@ -286,16 +314,15 @@ export default function OnboardingPage() {
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   placeholder="••••••••"
-                  className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-slate-50/50 text-slate-800"
+                  className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-[#FF8A00] bg-slate-50/50 text-slate-800"
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all cursor-pointer">Back</button>
+              <div className="pt-2">
                 <button 
                   type="submit"
                   disabled={isLoading}
-                  className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl shadow-xl transition-all text-sm disabled:opacity-50 cursor-pointer"
+                  className="w-full py-4 bg-[#FF8A00] hover:bg-[#e07900] text-white font-extrabold rounded-2xl shadow-lg transition-all text-sm disabled:opacity-50 cursor-pointer"
                 >
                   {isLoading ? 'Saving to Supabase...' : 'Save & Go to Dashboard'}
                 </button>

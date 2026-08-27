@@ -1,14 +1,17 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { Sparkles, Trophy, ArrowRight, Flame, Home, Camera, Target, Award, User, Settings as SettingsIcon, LogOut } from 'lucide-react';
+import Image from 'next/image';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'settings'>('dashboard');
   const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [userProfile, setUserProfile] = useState({
     name: 'Artist',
@@ -30,18 +33,62 @@ export default function DashboardPage() {
   const [recentAnalyses, setRecentAnalyses] = useState<any[]>([]);
 
   useEffect(() => {
-    async function fetchUserData() {
-      if (!supabase) return;
-      
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) return;
+    if (!supabase) return;
 
-      setUserId(user.id);
+    let isMounted = true;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+      if (!isMounted) return;
+
+      if (session) {
+        setUserId(session.user.id);
+        await fetchUserData(session.user.id);
+      } else {
+        if (event === 'SIGNED_OUT') {
+          router.push('/');
+        }
+      }
+    });
+
+    async function checkInitialSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && isMounted) {
+          setUserId(session.user.id);
+          await fetchUserData(session.user.id);
+        } else {
+          setTimeout(async () => {
+            const { data: { session: retrySession } } = await supabase.auth.getSession();
+            if (retrySession && isMounted) {
+              setUserId(retrySession.user.id);
+              await fetchUserData(retrySession.user.id);
+            } else if (isMounted) {
+              setIsLoading(false);
+            }
+          }, 1500);
+        }
+      } catch (err) {
+        console.error("Auth check error:", err);
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    checkInitialSession();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
+
+  async function fetchUserData(uid: string) {
+    try {
+      setUserId(uid);
 
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', uid)
         .maybeSingle();
 
       if (profile) {
@@ -58,12 +105,11 @@ export default function DashboardPage() {
       const { data: analysesData, error } = await supabase
         .from('analyses')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', uid)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error("Error fetching analyses:", error);
-        return;
       }
 
       const userXp = profile ? (profile.xp || profile.total_xp || 0) : 0;
@@ -87,10 +133,12 @@ export default function DashboardPage() {
       } else {
         setStats(prev => ({ ...prev, xp: userXp }));
       }
+    } catch (err) {
+      console.error("Error loading user data:", err);
+    } finally {
+      setIsLoading(false);
     }
-
-    fetchUserData();
-  }, []);
+  }
 
   const handleNavClick = (id: string) => {
     if (id === 'scan') {
@@ -119,24 +167,29 @@ export default function DashboardPage() {
     router.push('/');
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F1F3F6] flex items-center justify-center font-sans">
+        <div className="text-slate-600 font-extrabold animate-pulse text-sm">Loading DoodleFox Dashboard...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 flex pb-24 md:pb-0">
+    <div className="min-h-screen bg-[#F1F3F6] font-sans text-slate-900 flex pb-24 md:pb-0">
       {/* SIDEBAR NAVIGATION (Desktop) */}
       <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col justify-between p-6 sticky top-0 h-screen select-none">
         <div className="space-y-8">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-blue-50 rounded-2xl flex items-center justify-center shadow-sm p-1.5 border border-blue-100">
-              <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M50 12 L50 28" stroke="#F59E0B" strokeWidth="6" strokeLinecap="round"/>
-                <polygon points="50,7 45,17 55,17" fill="#EF4444" />
-                <rect x="15" y="32" width="70" height="48" rx="16" fill="#2563EB" />
-                <circle cx="35" cy="56" r="6" fill="white" />
-                <circle cx="65" cy="56" r="6" fill="white" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="font-bold text-lg leading-tight text-slate-900">Pencil Pilot</h1>
-              <p className="text-xs text-slate-400 font-medium">AI Drawing Coach</p>
+          {/* TOP LOGO - Hlka left-aligned aur bada kiya gaya hai */}
+          <div className="flex items-center -ml-2">
+            <div className="w-36 h-14 relative flex items-center justify-start">
+              <Image 
+                src="https://cdn.corenexis.com/f/tloOLJdZaNP.png" 
+                alt="DoodleFox Logo" 
+                fill 
+                unoptimized
+                className="object-contain object-left"
+              />
             </div>
           </div>
 
@@ -155,7 +208,7 @@ export default function DashboardPage() {
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition-all cursor-pointer ${
-                    isActive ? 'bg-blue-50 text-blue-600 font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                    isActive ? 'bg-orange-50 text-[#FF8A00] font-semibold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -168,22 +221,20 @@ export default function DashboardPage() {
           </nav>
         </div>
 
-        {/* SIDEBAR ROBOT */}
-        <div className="h-[220px] w-full p-[20px] rounded-[20px] bg-gradient-to-b from-blue-50/60 to-white border border-slate-100 shadow-sm overflow-hidden flex flex-col items-center justify-center text-center">
-          <div className="w-[90px] h-[90px] mb-[12px] flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 140 140" className="w-full h-full drop-shadow-sm" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <polygon points="70,12 63,28 77,28" fill="#EF4444" />
-              <rect x="66" y="28" width="8" height="6" fill="#CBD5E1" rx="1" />
-              <rect x="64" y="34" width="12" height="26" fill="#FBBF24" rx="2" />
-              <rect x="30" y="58" width="80" height="62" rx="30" fill="white" stroke="#E2E8F0" strokeWidth="2" />
-              <rect x="42" y="70" width="56" height="34" rx="14" fill="#1E3A8A" />
-              <path d="M54 84 Q60 89 66 84" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-              <path d="M74 84 Q80 89 86 84" stroke="white" strokeWidth="3" strokeLinecap="round"/>
-            </svg>
+        {/* BOTTOM MASCOT SECTION - Onboarding page wala mascot image */}
+        <div className="h-[220px] w-full p-[20px] rounded-[20px] bg-gradient-to-b from-orange-50/60 to-white border border-orange-100 shadow-sm overflow-hidden flex flex-col items-center justify-center text-center">
+          <div className="w-[120px] h-[70px] mb-[10px] relative flex items-center justify-center shrink-0">
+            <Image 
+              src="https://cdn.corenexis.com/f/tloOLJdZaNP.png" 
+              alt="DoodleFox Mascot" 
+              fill 
+              unoptimized
+              className="object-contain"
+            />
           </div>
           <div className="w-full flex flex-col items-center">
-            <h4 className="font-bold text-blue-700 text-sm mb-1">Keep practicing!</h4>
-            <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-[140px]">Every sketch makes you better.</p>
+            <h4 className="font-bold text-[#FF8A00] text-sm mb-1">Keep sketching!</h4>
+            <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-[140px]">Every artwork makes you a better artist.</p>
           </div>
         </div>
       </aside>
@@ -192,20 +243,20 @@ export default function DashboardPage() {
       <main className="flex-1 p-4 md:p-10 space-y-8 overflow-y-auto max-w-7xl mx-auto w-full">
         <header className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Good morning, {userProfile.username || userProfile.name}! 👋</h1>
-            <p className="text-sm text-slate-500 mt-1">Let's level up your drawing skills today.</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Welcome back, {userProfile.username || userProfile.name}! 👋</h1>
+            <p className="text-sm text-slate-500 mt-1">Let's level up your drawing skills with DoodleFox AI today.</p>
           </div>
           
           <div 
             onClick={() => router.push('/edit-profile')}
-            className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:border-blue-300 transition"
+            className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:border-orange-300 transition"
           >
-            <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow">
+            <div className="w-10 h-10 bg-[#FF8A00] text-white rounded-xl flex items-center justify-center font-bold text-sm shadow">
               {(userProfile.username || userProfile.name).charAt(0).toUpperCase()}
             </div>
             <div className="text-left hidden sm:block">
               <p className="text-sm font-bold text-slate-800">{userProfile.username || userProfile.name}</p>
-              <p className="text-xs text-blue-600 font-medium">{userProfile.skillLevel} • {userProfile.artStyle}</p>
+              <p className="text-xs text-[#FF8A00] font-medium">{userProfile.skillLevel} • {userProfile.artStyle}</p>
             </div>
           </div>
         </header>
@@ -222,7 +273,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
-                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold">⭐</div>
+                <div className="w-10 h-10 bg-orange-50 text-[#FF8A00] rounded-xl flex items-center justify-center font-bold">⭐</div>
                 <div>
                   <h3 className="text-2xl font-black text-slate-900">{stats.averageScore} / 100</h3>
                   <p className="text-xs font-semibold text-slate-700">Average Score</p>
@@ -248,31 +299,31 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            <section className="bg-gradient-to-br from-[#1f56ff] via-[#2563eb] to-[#3b82f6] rounded-[28px] p-6 md:p-10 relative overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-center min-h-[280px] w-full shadow-md">
+            <section className="bg-gradient-to-r from-[#1E2A44] to-[#2c3e6b] rounded-[28px] p-6 md:p-10 relative overflow-hidden grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-center min-h-[280px] w-full shadow-md">
               <div className="space-y-3.5 max-w-[450px] z-10 text-center md:text-left mx-auto md:mx-0">
-                <div className="inline-block bg-white/20 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider backdrop-blur-sm">
-                  AI SCAN
+                <div className="inline-block bg-[#FF8A00] text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+                  AI STUDIO SCAN
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
-                  Start scanning your drawing
+                  Start scanning your sketch
                 </h2>
-                <p className="text-blue-100 text-sm sm:text-[15px] font-medium">
-                  Upload your drawing and get instant AI feedback with actionable tips.
+                <p className="text-slate-300 text-sm sm:text-[15px] font-medium">
+                  Upload your drawing and get instant AI feedback with actionable line and shading tips.
                 </p>
               </div>
 
-              <div className="bg-gradient-to-b from-white/15 to-white/5 backdrop-blur-sm border border-dashed border-white/40 rounded-[20px] p-5 text-center z-10 w-full max-w-[300px] h-[200px] flex flex-col justify-center items-center mx-auto lg:mx-0 shrink-0 shadow-inner">
+              <div className="bg-white/10 backdrop-blur-sm border border-dashed border-white/30 rounded-[20px] p-5 text-center z-10 w-full max-w-[300px] h-[200px] flex flex-col justify-center items-center mx-auto lg:mx-0 shrink-0 shadow-inner">
                 <div className="w-[44px] h-[44px] bg-white rounded-xl mx-auto flex items-center justify-center mb-3 shadow-sm">
-                  <svg className="w-5 h-5 text-[#1f56ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <svg className="w-5 h-5 text-[#FF8A00]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <h4 className="text-white font-semibold text-sm mb-0.5">Upload your drawing</h4>
+                <h4 className="text-white font-semibold text-sm mb-0.5">Upload your artwork</h4>
                 <p className="text-white/70 text-[11px] mb-4">PNG, JPG (Max 20MB)</p>
                 
                 <button 
                   onClick={() => router.push('/scan')}
-                  className="w-full bg-white text-[#1f56ff] py-2.5 rounded-xl font-bold text-sm hover:bg-blue-50 transition shadow-sm cursor-pointer"
+                  className="w-full bg-[#FF8A00] text-white py-2.5 rounded-xl font-bold text-sm hover:bg-[#e07900] transition shadow-sm cursor-pointer"
                 >
                   Start Scanning
                 </button>
@@ -285,7 +336,7 @@ export default function DashboardPage() {
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 max-w-xl">
             <div>
               <h2 className="text-xl font-bold text-slate-900">Settings</h2>
-              <p className="text-sm text-slate-500 mt-1">Manage your account and session preferences.</p>
+              <p className="text-sm text-slate-500 mt-1">Manage your DoodleFox account and session preferences.</p>
             </div>
 
             <div className="pt-4 border-t border-slate-100 space-y-4">
@@ -317,12 +368,11 @@ export default function DashboardPage() {
       {/* MOBILE BOTTOM NAVIGATION BAR */}
       <nav aria-label="Mobile Navigation" className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl px-4 py-2 z-50">
         <div className="max-w-md mx-auto flex justify-between items-center">
-          
           <button 
             onClick={() => handleNavClick('dashboard')}
-            className={`flex flex-col items-center gap-1 transition cursor-pointer ${activeTab === 'dashboard' ? 'text-blue-600 font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`flex flex-col items-center gap-1 transition cursor-pointer ${activeTab === 'dashboard' ? 'text-[#FF8A00] font-bold' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            <div className={`p-1.5 rounded-2xl ${activeTab === 'dashboard' ? 'bg-blue-100 text-blue-600' : ''}`}>
+            <div className={`p-1.5 rounded-2xl ${activeTab === 'dashboard' ? 'bg-orange-100 text-[#FF8A00]' : ''}`}>
               <Home className="w-5 h-5" />
             </div>
             <span className="text-[10px]">Home</span>
@@ -367,7 +417,6 @@ export default function DashboardPage() {
             </div>
             <span className="text-[10px]">Profile</span>
           </button>
-
         </div>
       </nav>
     </div>
