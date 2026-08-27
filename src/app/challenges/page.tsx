@@ -215,7 +215,7 @@ export default function ChallengesPage() {
     let isMounted = true;
 
     // Check session right away
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: any } }) => {
       if (session?.user && isMounted) {
         await processUserData(session.user);
         setLoading(false);
