@@ -19,7 +19,6 @@ export default function OnboardingPage() {
     language: 'Hinglish',
     skillLevel: 'Beginner',
     goal: 'Improve Anatomy',
-    instagram: '',
     username: '',
     name: '',
     email: '',
@@ -28,11 +27,7 @@ export default function OnboardingPage() {
 
   const handleNext = () => {
     setErrorMessage('')
-    if (step === 4 && !formData.instagram.trim()) {
-      setErrorMessage('Instagram handle is required.')
-      return
-    }
-    if (step < 5) setStep(step + 1)
+    if (step < 4) setStep(step + 1)
   }
 
   const handlePrev = () => {
@@ -57,7 +52,6 @@ export default function OnboardingPage() {
             language: formData.language || 'Hinglish',
             skill_level: formData.skillLevel || 'Beginner',
             goal: formData.goal || 'Improve Anatomy',
-            instagram: formData.instagram,
           }
         }
       })
@@ -65,22 +59,18 @@ export default function OnboardingPage() {
       if (authError) throw authError
 
       if (authData.user) {
+        // Upserting strictly only core columns guaranteed to exist
         const { error: profileError } = await supabase.from('profiles').upsert({
           id: authData.user.id,
           name: formData.name,
           username: formData.username,
-          email: formData.email,
-          art_style: formData.artStyle || 'Sketching',
-          language: formData.language || 'Hinglish',
-          skill_level: formData.skillLevel || 'Beginner',
-          goal: formData.goal || 'Improve Anatomy',
-          instagram: formData.instagram,
-          updated_at: new Date(),
         })
 
         if (profileError) throw profileError
       }
 
+      // Instant session flags for seamless navigation
+      localStorage.setItem('isLoggedIn', 'true')
       localStorage.setItem('userName', formData.name)
       localStorage.setItem('userUsername', formData.username)
       localStorage.setItem('userProfile', JSON.stringify(formData))
@@ -128,10 +118,10 @@ export default function OnboardingPage() {
           
           <div className="flex items-center justify-between">
             <span className="text-xs font-black tracking-wider text-blue-600 uppercase">
-              QUESTION {step} OF 5
+              QUESTION {step} OF 4
             </span>
             <span className="text-xs font-extrabold text-slate-400">
-              {Math.round((step / 5) * 100)}% COMPLETED
+              {Math.round((step / 4) * 100)}% COMPLETED
             </span>
           </div>
 
@@ -140,8 +130,7 @@ export default function OnboardingPage() {
               {step === 1 && "Select your primary art style so I can give you custom critique."}
               {step === 2 && "Tell me your current skill level to adjust feedback depth."}
               {step === 3 && "What is your main drawing goal right now?"}
-              {step === 4 && "Share your Instagram handle so we can connect & feature your work!"}
-              {step === 5 && "Almost done! Enter your account details to save your profile."}
+              {step === 4 && "Almost done! Enter your account details to save your profile."}
             </p>
           </div>
 
@@ -176,7 +165,7 @@ export default function OnboardingPage() {
               <button 
                 type="button"
                 onClick={handleNext}
-                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl shadow-xl transition-all text-sm flex items-center justify-center gap-2"
+                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl shadow-xl transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Continue</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
@@ -207,8 +196,8 @@ export default function OnboardingPage() {
                 ))}
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all">Back</button>
-                <button type="button" onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all">Continue</button>
+                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all cursor-pointer">Back</button>
+                <button type="button" onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all cursor-pointer">Continue</button>
               </div>
             </div>
           )}
@@ -236,44 +225,15 @@ export default function OnboardingPage() {
                 ))}
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all">Back</button>
-                <button type="button" onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all">Continue</button>
+                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all cursor-pointer">Back</button>
+                <button type="button" onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all cursor-pointer">Continue</button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: Instagram Profile */}
+          {/* STEP 4: Credentials & Save (Directly shifted from step 5) */}
           {step === 4 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-                What is your Instagram handle?
-              </h2>
-              <div>
-                <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">
-                  Instagram Handle <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">@</span>
-                  <input 
-                    type="text" 
-                    required
-                    value={formData.instagram}
-                    onChange={(e) => setFormData({...formData, instagram: e.target.value})}
-                    placeholder="your.art.handle"
-                    className="w-full pl-9 pr-4 py-3.5 rounded-2xl border border-slate-200 text-sm font-semibold focus:outline-none focus:border-blue-600 bg-slate-50/50 text-slate-800"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all">Back</button>
-                <button type="button" onClick={handleNext} className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-sm shadow-xl transition-all">Continue</button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 5: Credentials & Save */}
-          {step === 5 && (
-            <form onSubmit={handleCompleteSignup} className="space-y-4">
+            <form onSubmit={handleCompleteSignup} className="space-y-4" autoComplete="off">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">
                 Save your account details
               </h2>
@@ -283,6 +243,7 @@ export default function OnboardingPage() {
                 <input 
                   type="text" 
                   required
+                  autoComplete="username"
                   value={formData.username}
                   onChange={(e) => setFormData({...formData, username: e.target.value})}
                   placeholder="e.g. alex_artist"
@@ -295,6 +256,7 @@ export default function OnboardingPage() {
                 <input 
                   type="text" 
                   required
+                  autoComplete="name"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="e.g. Alex Artist"
@@ -307,6 +269,7 @@ export default function OnboardingPage() {
                 <input 
                   type="email" 
                   required
+                  autoComplete="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   placeholder="e.g. alex@example.com"
@@ -319,6 +282,7 @@ export default function OnboardingPage() {
                 <input 
                   type="password" 
                   required
+                  autoComplete="new-password"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   placeholder="••••••••"
@@ -327,11 +291,11 @@ export default function OnboardingPage() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all">Back</button>
+                <button type="button" onClick={handlePrev} className="w-1/3 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl text-sm transition-all cursor-pointer">Back</button>
                 <button 
                   type="submit"
                   disabled={isLoading}
-                  className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl shadow-xl transition-all text-sm disabled:opacity-50"
+                  className="w-2/3 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl shadow-xl transition-all text-sm disabled:opacity-50 cursor-pointer"
                 >
                   {isLoading ? 'Saving to Supabase...' : 'Save & Go to Dashboard'}
                 </button>

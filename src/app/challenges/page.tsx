@@ -189,18 +189,44 @@ export default function ChallengesPage() {
       setTotalXp(xpVal);
       setStreak(userData.streak || 0);
       setLastActivityDate(userData.last_activity_date || null);
-      const comp = userData.completed_challenges || [];
+      
+      // Safe assignment ensuring it's always an array
+      const comp = Array.isArray(userData.completed_challenges) ? userData.completed_challenges : [];
       setCompletedChallenges(comp);
     }
 
     await refreshLeaderboard(currentUserId);
   }, [refreshLeaderboard]);
 
-  // Auth Monitoring Listener
+  // Robust Auth Monitoring & LocalStorage Protection
   useEffect(() => {
-    if (!supabase) return;
+    const loggedIn = localStorage.getItem('isLoggedIn');
+    if (!loggedIn) {
+      setLoading(false);
+      router.push('/login');
+      return;
+    }
+
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
 
     let isMounted = true;
+
+    // Check session right away
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user && isMounted) {
+        await processUserData(session.user);
+        setLoading(false);
+      } else {
+        setTimeout(() => {
+          if (isMounted && loading) {
+            setLoading(false);
+          }
+        }, 1500);
+      }
+    });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       if (session?.user) {
@@ -209,7 +235,7 @@ export default function ChallengesPage() {
           setLoading(false);
         }
       } else {
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') {
+        if (event === 'SIGNED_OUT') {
           if (isMounted) {
             setLoading(false);
             router.push('/login');
@@ -222,15 +248,15 @@ export default function ChallengesPage() {
       isMounted = false;
       subscription?.unsubscribe();
     };
-  }, [router, processUserData]);
+  }, [router, processUserData, loading]);
 
   // Handle challenge submission
   const handleFinishChallenge = async (challengeId: string, rewardXp: number) => {
     if (!userId) return;
 
-    const alreadyCompleted = completedChallenges.includes(challengeId);
+    const safeCompleted = Array.isArray(completedChallenges) ? completedChallenges : [];
+    const alreadyCompleted = safeCompleted.includes(challengeId);
     
-    // If already completed, do not give XP again, just return to hub
     if (alreadyCompleted) {
       setActiveView('hub');
       return;
@@ -258,7 +284,7 @@ export default function ChallengesPage() {
     }
 
     const newXp = totalXp + rewardXp;
-    const updatedCompleted = [...completedChallenges, challengeId];
+    const updatedCompleted = [...safeCompleted, challengeId];
     
     setTotalXp(newXp);
     setStreak(newStreak);
@@ -401,7 +427,10 @@ export default function ChallengesPage() {
   const currentStepsList = activeView === 'lines-practice' ? LINES_STEPS : EYE_STEPS;
   const currentChallengeId = activeView === 'lines-practice' ? 'lines-practice' : 'eye-drawing-1min';
   const currentChallengeReward = activeView === 'lines-practice' ? 50 : 100;
-  const isCurrentCompleted = completedChallenges.includes(currentChallengeId);
+  
+  // Safe Array check to completely prevent .includes runtime crash
+  const safeCompletedChallenges = Array.isArray(completedChallenges) ? completedChallenges : [];
+  const isCurrentCompleted = safeCompletedChallenges.includes(currentChallengeId);
 
   return (
     <div className="min-h-screen font-sans bg-gradient-to-br from-blue-600 to-blue-800 text-slate-900 p-4 md:p-10 flex flex-col items-center">
@@ -456,7 +485,7 @@ export default function ChallengesPage() {
                 <div className="text-center px-3 py-1 border-t border-blue-800 pt-2">
                   <span className="text-[10px] text-blue-300 uppercase font-bold block">Completed</span>
                   <span className="text-base font-black text-blue-300 flex items-center justify-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5" /> {completedChallenges.length}
+                    <CheckCircle className="w-3.5 h-3.5" /> {safeCompletedChallenges.length}
                   </span>
                 </div>
                 <div className="text-center px-3 py-1 border-l border-t border-blue-800 pt-2">
@@ -504,9 +533,9 @@ export default function ChallengesPage() {
                     onClick={() => { setActiveView('eye-drawing-1min'); setCurrentStep(0); }}
                     className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-md transition text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {completedChallenges.includes('eye-drawing-1min') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
+                    {safeCompletedChallenges.includes('eye-drawing-1min') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
                   </button>
-                  {completedChallenges.includes('eye-drawing-1min') && (
+                  {safeCompletedChallenges.includes('eye-drawing-1min') && (
                     <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
                       <CheckCircle className="w-3.5 h-3.5" /> Completed (+100 XP Claimed)
                     </span>
@@ -552,9 +581,9 @@ export default function ChallengesPage() {
                     onClick={() => { setActiveView('lines-practice'); setCurrentStep(0); }}
                     className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-md transition text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    {completedChallenges.includes('lines-practice') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
+                    {safeCompletedChallenges.includes('lines-practice') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
                   </button>
-                  {completedChallenges.includes('lines-practice') && (
+                  {safeCompletedChallenges.includes('lines-practice') && (
                     <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
                       <CheckCircle className="w-3.5 h-3.5" /> Completed (+50 XP Claimed)
                     </span>
@@ -612,7 +641,7 @@ export default function ChallengesPage() {
                             <div className="w-14 h-14 bg-amber-500 border-2 border-amber-300 rounded-2xl flex items-center justify-center font-black text-slate-950 text-xl shadow-lg">
                               {(leaderboard[0]?.name || 'U').charAt(0).toUpperCase()}
                             </div>
-                            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-xl">🥇</span>
+                            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-xl">👑</span>
                           </div>
                           <div className="text-center truncate w-full">
                             <h4 className="font-extrabold text-sm text-white truncate">{leaderboard[0]?.name || 'User'}</h4>
