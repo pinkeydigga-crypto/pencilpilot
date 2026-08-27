@@ -1,75 +1,63 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Save } from 'lucide-react';
-
-const AVATAR_SEEDS = ['artist', 'robot', 'cute', 'pixel', 'friendly', 'cool'];
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import { ArrowLeft, Save, Sparkles, User, Camera } from 'lucide-react';
+import Image from 'next/image';
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const [userId, setUserId] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     name: '',
-    artStyle: '',
-    skillLevel: '',
-    goal: '',
-    avatar_seed: 'artist'
+    username: '',
+    artStyle: 'Sketching',
+    skillLevel: 'Beginner',
+    goal: 'Improve Anatomy',
+    language: 'Hinglish'
   });
 
-  // 1. Fetch Logged-In User ID Dynamically with Robust Session Handling
+  const [message, setMessage] = useState({ type: '', text: '' });
+
   useEffect(() => {
     if (!supabase) return;
 
     let isMounted = true;
 
-    // Realtime auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       if (!isMounted) return;
-      if (session?.user) {
+
+      if (session) {
         setUserId(session.user.id);
-      } else if (event === 'SIGNED_OUT') {
-        router.push('/');
+        await fetchProfile(session.user.id);
+      } else {
+        if (event === 'SIGNED_OUT') {
+          router.push('/');
+        }
       }
     });
 
-    async function verifyUser() {
+    async function getInitialSession() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user && isMounted) {
-          setUserId(user.id);
-          return;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && isMounted) {
+          setUserId(session.user.id);
+          await fetchProfile(session.user.id);
+        } else if (isMounted) {
+          setIsLoading(false);
         }
-
-        // Retry after a short delay if session takes time to load
-        setTimeout(async () => {
-          const { data: { user: retryUser } } = await supabase.auth.getUser();
-          if (retryUser && isMounted) {
-            setUserId(retryUser.id);
-          } else {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user && isMounted) {
-              setUserId(session.user.id);
-            } else if (isMounted) {
-              // Check if token really exists in storage before kicking out
-              let hasToken = false;
-              if (typeof window !== 'undefined') {
-                hasToken = Object.keys(localStorage).some(key => key.includes('supabase.auth.token') || key.includes('-auth-token'));
-              }
-              if (!hasToken) {
-                router.push('/');
-              }
-            }
-          }
-        }, 1500);
       } catch (err) {
-        console.error("Auth verify error:", err);
+        console.error("Session check error:", err);
+        if (isMounted) setIsLoading(false);
       }
     }
 
-    verifyUser();
+    getInitialSession();
 
     return () => {
       isMounted = false;
@@ -77,152 +65,230 @@ export default function EditProfilePage() {
     };
   }, [router]);
 
-  // 2. Load Profile Data for Logged-In User
-  useEffect(() => {
-    async function loadProfile() {
-      if (!supabase || !userId) return;
-      
+  async function fetchProfile(uid: string) {
+    try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('id', uid)
         .maybeSingle();
-
-      if (error) {
-        console.error("Error loading profile:", error);
-      }
 
       if (data) {
         setFormData({
           name: data.name || '',
-          artStyle: data.art_style || '',
-          skillLevel: data.skill_level || '',
-          goal: data.goal || '',
-          avatar_seed: data.avatar_seed || 'artist'
+          username: data.username || '',
+          artStyle: data.art_style || 'Sketching',
+          skillLevel: data.skill_level || 'Beginner',
+          goal: data.goal || 'Improve Anatomy',
+          language: data.language || 'Hinglish'
         });
       }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    } finally {
+      setIsLoading(false);
     }
-    loadProfile();
-  }, [userId]);
+  }
 
-  const handleSave = async () => {
-    if (!supabase || !userId) {
-      alert("User session not ready yet. Please wait a second.");
-      return;
-    }
-    setLoading(true);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        name: formData.name,
-        art_style: formData.artStyle,
-        skill_level: formData.skillLevel,
-        goal: formData.goal,
-        avatar_seed: formData.avatar_seed
-      }, { onConflict: 'id' });
-    
-    setLoading(false);
-    if (!error) {
-      router.push('/dashboard');
-    } else {
-      console.error("Error saving profile details:", error.message, error.details, error.code);
-      alert(`Error saving profile: ${error.message || 'Check console'}`);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId || !supabase) return;
+
+    setIsSaving(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: formData.name,
+          username: formData.username,
+          art_style: formData.artStyle,
+          skill_level: formData.skillLevel,
+          goal: formData.goal,
+          language: formData.language,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setTimeout(() => {
+        router.push('/');
+      }, 1000);
+    } catch (err: any) {
+      console.error("Error updating profile:", err);
+      setMessage({ type: 'error', text: err.message || 'Failed to update profile.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F1F3F6] flex items-center justify-center font-sans">
+        <div className="text-slate-600 font-extrabold animate-pulse text-sm">Loading profile settings...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#F1F3F6] p-6 md:p-10 flex justify-center font-sans text-slate-900">
-      <div className="max-w-xl w-full bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 mb-6 hover:text-slate-900 cursor-pointer font-medium text-sm transition">
-          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-        </button>
-        
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-black text-[#1E2A44]">Edit Profile</h1>
-          <span className="text-xs font-bold text-[#FF8A00] bg-orange-50 px-3 py-1 rounded-full uppercase tracking-wider">
-            DoodleFox Studio
-          </span>
-        </div>
-
-        {/* Live Avatar Preview */}
-        <div className="flex items-center gap-4 mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-          <img 
-            src={`https://api.dicebear.com/7.x/bottts/svg?seed=${formData.avatar_seed}`} 
-            alt="Avatar" 
-            className="w-16 h-16 rounded-2xl bg-orange-50 border border-orange-200 p-1 shadow-sm"
-          />
-          <div>
-            <h3 className="font-bold text-slate-800">{formData.name || 'DoodleFox Artist'}</h3>
-            <p className="text-xs text-[#FF8A00] font-medium">Live Avatar Preview</p>
+    <div className="min-h-screen bg-[#F1F3F6] font-sans text-slate-900 py-8 px-4">
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Top Header */}
+        <div className="flex items-center justify-between">
+          <button 
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-semibold text-sm bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
+          
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 relative flex items-center justify-center">
+              <Image 
+                src="https://cdn.corenexis.com/f/tloOLJdZaNP.png" 
+                alt="DoodleFox Logo" 
+                fill 
+                unoptimized
+                className="object-contain"
+              />
+            </div>
+            <span className="font-bold text-sm text-slate-800">DoodleFox</span>
           </div>
         </div>
 
-        {/* Avatar Selection */}
-        <div className="mb-8">
-          <label className="block text-sm font-semibold mb-3 text-slate-700">Choose your Avatar</label>
-          <div className="grid grid-cols-6 gap-3">
-            {AVATAR_SEEDS.map((seed) => (
+        {/* Form Card */}
+        <div className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Edit Profile</h1>
+            <p className="text-sm text-slate-500 mt-1">Customize your artist profile details and learning preferences.</p>
+          </div>
+
+          {message.text && (
+            <div className={`p-4 rounded-2xl text-sm font-medium ${message.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+              {message.text}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Full Name</label>
+                <input 
+                  type="text" 
+                  name="name" 
+                  value={formData.name} 
+                  onChange={handleChange}
+                  placeholder="Enter your name"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#FF8Id00] focus:ring-2 focus:ring-orange-100 transition"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Username</label>
+                <input 
+                  type="text" 
+                  name="username" 
+                  value={formData.username} 
+                  onChange={handleChange}
+                  placeholder="Enter username"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#FF8A00] focus:ring-2 focus:ring-orange-100 transition"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Primary Art Style</label>
+                <select 
+                  name="artStyle" 
+                  value={formData.artStyle} 
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#FF8A00] focus:ring-2 focus:ring-orange-100 transition"
+                >
+                  <option value="Sketching">Sketching</option>
+                  <option value="Anime / Manga">Anime / Manga</option>
+                  <option value="Portrait">Portrait</option>
+                  <option value="Digital Art">Digital Art</option>
+                  <option value="Watercolour">Watercolour</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Skill Level</label>
+                <select 
+                  name="skillLevel" 
+                  value={formData.skillLevel} 
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#FF8A00] focus:ring-2 focus:ring-orange-100 transition"
+                >
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Pro">Pro</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Primary Goal</label>
+                <select 
+                  name="goal" 
+                  value={formData.goal} 
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#FF8A00] focus:ring-2 focus:ring-orange-100 transition"
+                >
+                  <option value="Improve Anatomy">Improve Anatomy</option>
+                  <option value="Master Shading">Master Shading</option>
+                  <option value="Better Line Art">Better Line Art</option>
+                  <option value="Character Design">Character Design</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Language Preference</label>
+                <select 
+                  name="language" 
+                  value={formData.language} 
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#FF8A00] focus:ring-2 focus:ring-orange-100 transition"
+                >
+                  <option value="Hinglish">Hinglish</option>
+                  <option value="English">English</option>
+                  <option value="Hindi">Hindi</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="pt-4 flex items-center justify-end gap-3">
               <button 
-                key={seed}
                 type="button"
-                onClick={() => setFormData({...formData, avatar_seed: seed})}
-                className={`p-1 rounded-2xl border-2 transition cursor-pointer ${formData.avatar_seed === seed ? 'border-[#FF8A00] bg-orange-50 scale-105 shadow-sm' : 'border-slate-100 hover:border-slate-300'}`}
+                onClick={() => router.push('/')}
+                className="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition cursor-pointer"
               >
-                <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`} alt="avatar" className="w-full h-auto" />
+                Cancel
               </button>
-            ))}
-          </div>
+              
+              <button 
+                type="submit"
+                disabled={isSaving}
+                className="flex items-center gap-2 bg-[#FF8A00] text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#e07900] transition shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
         </div>
-
-        {/* Form Fields */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Name</label>
-            <input 
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FF8A00] focus:border-[#FF8A00] outline-none text-slate-800 font-medium transition"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              placeholder="Enter your name"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Art Style</label>
-            <input 
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FF8A00] focus:border-[#FF8A00] outline-none text-slate-800 font-medium transition"
-              value={formData.artStyle}
-              onChange={(e) => setFormData({...formData, artStyle: e.target.value})}
-              placeholder="e.g. Sketching, Anime, Portrait"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Skill Level</label>
-            <input 
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FF8A00] focus:border-[#FF8A00] outline-none text-slate-800 font-medium transition"
-              value={formData.skillLevel}
-              onChange={(e) => setFormData({...formData, skillLevel: e.target.value})}
-              placeholder="e.g. Beginner, Intermediate, Pro"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Goal</label>
-            <input 
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#FF8A00] focus:border-[#FF8A00] outline-none text-slate-800 font-medium transition"
-              value={formData.goal}
-              onChange={(e) => setFormData({...formData, goal: e.target.value})}
-              placeholder="e.g. Improve Anatomy, Daily Shading Practice"
-            />
-          </div>
-        </div>
-
-        <button 
-          onClick={handleSave}
-          disabled={loading}
-          className="w-full mt-8 bg-[#FF8A00] text-white py-3.5 rounded-xl font-bold hover:bg-[#e07900] flex items-center justify-center gap-2 cursor-pointer transition shadow-md"
-        >
-          {loading ? "Saving Profile..." : <><Save className="w-4 h-4" /> Save Profile Details</>}
-        </button>
       </div>
     </div>
   );
