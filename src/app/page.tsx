@@ -29,12 +29,12 @@ export default function Home() {
           </div>
 
           {/* Main Hero Headings */}
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight text-[#1E2A44] text-left">
-            Make Every <br />
-            <span className="text-[#FF8A00]">Drawing Better.</span>
+          <h1 className="text-6xl md:text-7xl font-black tracking-tight leading-none text-[#1E2A44] text-left">
+            Make every <br />
+            <span className="text-[#FF8A00]">drawing better.</span>
           </h1>
           
-          <p className="text-slate-600 text-xl md:text-2xl font-medium text-left">
+          <p className="text-slate-600 text-xl md:text-2xl font-medium">
             Learn art through fun challenges and get instant AI feedback on your creations with Dodo!
           </p>
         </div>
