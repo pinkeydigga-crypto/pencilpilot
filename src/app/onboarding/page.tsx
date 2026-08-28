@@ -16,7 +16,7 @@ export default function OnboardingPage() {
   const [errorMessage, setErrorMessage] = useState('')
  
   const [formData, setFormData] = useState({
-    artStyle: 'Sketching', // Default to Sketching
+    artStyle: 'Sketching',
     language: 'Hinglish',
     skillLevel: 'Beginner',
     goal: 'Improve Anatomy',
@@ -42,6 +42,9 @@ export default function OnboardingPage() {
     setErrorMessage('')
 
     try {
+      // Clear any existing session to prevent account leaking/mixing
+      await supabase.auth.signOut()
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -160,7 +163,7 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 1: Art Style (Sirf Sketching aur Drawing) */}
+          {/* STEP 1: Art Style */}
           {step === 1 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-black text-[#1E2A44] tracking-tight">
