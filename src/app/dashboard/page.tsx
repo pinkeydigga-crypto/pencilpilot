@@ -23,7 +23,7 @@ export default function DashboardPage() {
   });
 
   const [stats, setStats] = useState({
-    streak: 3,
+    streak: 0,
     rank: 'Unranked',
     xp: 0
   });
@@ -115,6 +115,7 @@ export default function DashboardPage() {
       }
 
       const userXp = profile ? (profile.xp || profile.total_xp || 0) : 0;
+      const userStreak = profile ? (profile.streak || 0) : 0;
 
       // Calculate Leaderboard Rank Dynamically
       let calculatedRank = profile?.rank || 'Unranked';
@@ -136,7 +137,7 @@ export default function DashboardPage() {
       }
 
       setStats({
-        streak: profile?.streak || 3,
+        streak: userStreak,
         rank: calculatedRank,
         xp: userXp
       });
