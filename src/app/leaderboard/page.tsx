@@ -24,8 +24,11 @@ interface Profile {
   avatar_seed?: string | null;
 }
 
+const VALID_AVATARS = ['artist', 'doodle', 'sketch', 'creative', 'fox', 'paints'];
+
 const getCartoonAvatar = (seed: string) => {
-  return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(seed || 'artist')}&backgroundColor=ffe5cc,ffdfbf,ffd5dc,d1d4f9`;
+  const safeSeed = VALID_AVATARS.includes(seed) ? seed : 'artist';
+  return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(safeSeed)}&backgroundColor=ffe5cc,ffdfbf,ffd5dc,d1d4f9`;
 };
 
 // Canvas roundRect Polyfill Helper
@@ -107,6 +110,24 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     fetchLeaderboard();
+  }, [fetchLeaderboard]);
+
+  useEffect(() => {
+    if (!supabase) return;
+    const channel = supabase
+      .channel('public:profiles')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          fetchLeaderboard();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchLeaderboard]);
 
   useEffect(() => {
@@ -230,7 +251,7 @@ export default function LeaderboardPage() {
       // Avatar
       const avatarImg = new Image();
       avatarImg.crossOrigin = 'anonymous';
-      avatarImg.src = getCartoonAvatar(currentUser.avatar_seed || currentUser.name || '');
+      avatarImg.src = getCartoonAvatar(currentUser.avatar_seed || 'artist');
 
       avatarImg.onload = () => {
         const avatarX = cardX + 230;
@@ -347,7 +368,7 @@ export default function LeaderboardPage() {
                 {leaderboard[1] && (
                   <div className={`flex flex-col items-center space-y-2 w-28 text-center p-3 rounded-2xl border ${leaderboard[1].id === userId ? 'border-[#FF8A00] bg-orange-50/50 ring-2 ring-orange-400' : 'border-slate-200 bg-white'}`}>
                     <div className="relative">
-                      <img src={getCartoonAvatar(leaderboard[1].avatar_seed || leaderboard[1].name || '')} alt="avatar" className="w-14 h-14 rounded-2xl border-2 border-slate-300 shadow-sm bg-slate-100 object-cover p-0.5" />
+                      <img src={getCartoonAvatar(leaderboard[1].avatar_seed || 'artist')} alt="avatar" className="w-14 h-14 rounded-2xl border-2 border-slate-300 shadow-sm bg-slate-100 object-cover p-0.5" />
                       <span className="absolute -top-4 -right-1 text-base">🥈</span>
                     </div>
                     <div className="w-full">
@@ -365,7 +386,7 @@ export default function LeaderboardPage() {
                   <div className={`flex flex-col items-center space-y-2 w-32 text-center p-3 rounded-2xl border-2 ${leaderboard[0].id === userId ? 'border-[#FF8A00] bg-orange-50/50 ring-4 ring-orange-400' : 'border-[#FF8A00] bg-orange-50/30'} shadow-md`}>
                     <div className="relative pt-2">
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl">🥇</div>
-                      <img src={getCartoonAvatar(leaderboard[0].avatar_seed || leaderboard[0].name || '')} alt="avatar" className="w-18 h-18 rounded-3xl border-2 border-[#FF8A00] shadow-md bg-orange-100 object-cover p-0.5" />
+                      <img src={getCartoonAvatar(leaderboard[0].avatar_seed || 'artist')} alt="avatar" className="w-18 h-18 rounded-3xl border-2 border-[#FF8A00] shadow-md bg-orange-100 object-cover p-0.5" />
                     </div>
                     <div className="w-full">
                       <h4 className="font-extrabold text-sm text-[#1E2A44] truncate">{leaderboard[0]?.name || 'User'}</h4>
@@ -381,7 +402,7 @@ export default function LeaderboardPage() {
                 {leaderboard[2] && (
                   <div className={`flex flex-col items-center space-y-2 w-28 text-center p-3 rounded-2xl border ${leaderboard[2].id === userId ? 'border-[#FF8A00] bg-orange-50/50 ring-2 ring-orange-400' : 'border-amber-700/30 bg-white'}`}>
                     <div className="relative">
-                      <img src={getCartoonAvatar(leaderboard[2].avatar_seed || leaderboard[2].name || '')} alt="avatar" className="w-14 h-14 rounded-2xl border-2 border-amber-600/60 shadow-sm bg-amber-50 object-cover p-0.5" />
+                      <img src={getCartoonAvatar(leaderboard[2].avatar_seed || 'artist')} alt="avatar" className="w-14 h-14 rounded-2xl border-2 border-amber-600/60 shadow-sm bg-amber-50 object-cover p-0.5" />
                       <span className="absolute -top-4 -right-1 text-base">🥉</span>
                     </div>
                     <div className="w-full">
@@ -418,7 +439,7 @@ export default function LeaderboardPage() {
                       >
                         <div className="flex items-center gap-4">
                           <span className="font-black text-[#FF8A00] text-sm w-6">#{rankNum}</span>
-                          <img src={getCartoonAvatar(user.avatar_seed || user.name || '')} alt="avatar" className="w-10 h-10 rounded-xl bg-orange-100 object-cover border border-slate-200 shadow-sm flex-shrink-0 p-0.5" />
+                          <img src={getCartoonAvatar(user.avatar_seed || 'artist')} alt="avatar" className="w-10 h-10 rounded-xl bg-orange-100 object-cover border border-slate-200 shadow-sm flex-shrink-0 p-0.5" />
                           <div>
                             <h4 className="font-bold text-sm text-[#1E2A44] flex items-center gap-2">
                               {user.name || `Artist #${rankNum}`}

@@ -14,7 +14,9 @@ import {
   Sparkles,
   Clock,
   Target,
-  Check
+  Check,
+  Layers,
+  Zap
 } from 'lucide-react';
 
 interface Profile {
@@ -32,75 +34,134 @@ interface TutorialStep {
   title: string;
   instruction: string;
   tips: string[];
-  svgType: string;
+  imageUrl: string;
 }
 
 const EYE_STEPS: TutorialStep[] = [
   {
     step: 1,
-    title: "Basic Eye Shape",
-    instruction: "Create a simple almond-shaped outline as shown in the reference guide to establish overall proportions.",
-    tips: ["Keep both sides symmetrical", "Use light, flexible pencil strokes"],
-    svgType: "outline"
+    title: "Step 1: Basic Outlines & Guide Lines",
+    instruction: "First, lightly draw an almond shape with a pencil, then add a circle inside for the iris and mark guide lines.",
+    tips: ["Keep both sides balanced", "Use very light pencil strokes"],
+    imageUrl: "https://cdn.corenexis.com/f/6ihYUzokRln.jpeg"
   },
   {
     step: 2,
-    title: "Add Iris",
-    instruction: "Sketch a clean circle inside the almond shape for the iris and a smaller center dot for the pupil.",
-    tips: ["Ensure proper center alignment", "Keep lines light and erasable"],
-    svgType: "iris"
+    title: "Step 2: Eyelid Crease & Structure",
+    instruction: "Draw another curved line above to represent the eyelid crease, and erase any unnecessary inner guidelines.",
+    tips: ["Match the curve to the upper slope", "Keep transitions smooth"],
+    imageUrl: "https://cdn.corenexis.com/f/S57AQudsj3l.png"
   },
   {
     step: 3,
-    title: "Add Eyelids",
-    instruction: "Draw the upper eyelid crease curve above the almond shape to establish anatomical depth.",
-    tips: ["Match the curve to the upper slope", "Keep the transition smooth"],
-    svgType: "eyelids"
+    title: "Step 3: Iris & Pupil Details",
+    instruction: "Draw the pupil inside the iris and start adding light shading inside the iris to create depth.",
+    tips: ["Make sure the pupil is centered", "Keep your lines light and easy to erase"],
+    imageUrl: "https://cdn.corenexis.com/f/Lvq32gZlqCz.png"
   },
   {
     step: 4,
-    title: "Add Eyelashes",
-    instruction: "Flick outward light strokes along the top and bottom lash lines to form natural tapered eyelashes.",
-    tips: ["Make upper lashes longer and thicker", "Flick wrist outward quickly"],
-    svgType: "eyelashes"
+    title: "Step 4: Highlights & Soft Shading",
+    instruction: "Shade the surrounding skin softly, and leave a tiny white dot unshaded to show light reflection.",
+    tips: ["Leave a small white dot for light", "Blend smoothly for a natural look"],
+    imageUrl: "https://cdn.corenexis.com/f/hq7jUBRMjzk.png"
   },
   {
     step: 5,
-    title: "Add Shading",
-    instruction: "Shade gradient tones inside the iris and add soft structural shadows under the upper lid for realism.",
-    tips: ["Leave a tiny white dot unshaded for light reflection", "Blend softly with a blending stump"],
-    svgType: "shading"
-  },
-  {
-    step: 6,
-    title: "Final Realistic Eye",
-    instruction: "Clean up unwanted guidelines, darken pupil accents, and finalize your complete realistic eye drawing!",
-    tips: ["Check overall contrast", "Sign your completed artwork"],
-    svgType: "final"
+    title: "Step 5: Final Realistic Eye & Eyelashes",
+    instruction: "Complete the drawing by adding long, natural upper and lower eyelashes. Scan your drawing for analysis.",
+    tips: ["Check your overall contrast", "Sign your completed artwork"],
+    imageUrl: "https://cdn.corenexis.com/f/jGJJCV2Bi2l.png"
   }
 ];
 
-const LINES_STEPS: TutorialStep[] = [
+const CUBE_STEPS: TutorialStep[] = [
   {
     step: 1,
-    title: "Vertical Lines Practice",
-    instruction: "Draw parallel vertical lines from top to bottom across the entire page with steady, even spacing.",
-    tips: ["Keep your hand relaxed", "Draw from the elbow/shoulder, not just the wrist"],
-    svgType: "vertical-lines"
+    title: "Step 1: First Corner Lines",
+    instruction: "Start by drawing a simple vertical line and a horizontal line meeting at a corner to outline the front face edge.",
+    tips: ["Keep lines straight", "Use light pencil pressure"],
+    imageUrl: "https://cdn.corenexis.com/f/uYBWh9GWeEE.png"
   },
   {
     step: 2,
-    title: "Horizontal Lines Practice",
-    instruction: "Cross your vertical lines by drawing straight, parallel horizontal lines from left to right across the page.",
-    tips: ["Maintain equal distance between lines", "Keep strokes confident and smooth"],
-    svgType: "horizontal-lines"
+    title: "Step 2: Complete the First Square",
+    instruction: "Close the square by drawing the remaining top and right side lines to form the front face of the cube.",
+    tips: ["Ensure right angles at the corners", "Keep lines clean"],
+    imageUrl: "https://cdn.corenexis.com/f/3yBwlyjDQTY.png"
   },
   {
     step: 3,
-    title: "Full Page Grid Mastery",
-    instruction: "Fill the entire page uniformly with alternating vertical and vice versa horizontal lines to build hand control.",
-    tips: ["Don't rush the process", "Focus on consistent line pressure"],
-    svgType: "grid-lines"
+    title: "Step 3: Draw the Second Offset Square",
+    instruction: "Draw a second identical square overlapping behind and slightly offset to form the back-depth perspective.",
+    tips: ["Keep the square dimensions identical", "Align placement carefully"],
+    imageUrl: "https://cdn.corenexis.com/f/zk8Yd7Nptkv.png"
+  },
+  {
+    step: 4,
+    title: "Step 4: Connect the Corners",
+    instruction: "Connect the corresponding corners of the front and back squares with diagonal lines to give the shape 3D depth.",
+    tips: ["Check parallel alignment", "Make sure all four corners connect"],
+    imageUrl: "https://cdn.corenexis.com/f/j2KxbycAJPu.png"
+  },
+  {
+    step: 5,
+    title: "Step 5: Clean Up & Final Edges",
+    instruction: "Review your structure, darken the visible outer lines, and ensure all perspective edges look solid.",
+    tips: ["Darken main structural lines", "Double-check proportions"],
+    imageUrl: "https://cdn.corenexis.com/f/21LDoCKkRcS.png"
+  },
+  {
+    step: 6,
+    title: "Step 6: Color & Shading",
+    instruction: "Complete your 3D cube by adding flat color or gradient shading to distinguish the top, front, and side faces.",
+    tips: ["Use different tones for each face", "Keep color smooth and clean"],
+    imageUrl: "https://cdn.corenexis.com/f/YYS6Kpptv7X.png"
+  }
+];
+
+const PORTRAIT_STEPS: TutorialStep[] = [
+  {
+    step: 1,
+    title: "Step 1: The Base Sphere & Cranial Mass",
+    instruction: "Start with a light, organic circle representing the cranium. Keep your initial lines loose and feathery to establish overall volume.",
+    tips: ["Keep strokes feather-light", "Establish center axis early"],
+    imageUrl: "https://cdn.corenexis.com/f/I29zoTSWeLE.png"
+  },
+  {
+    step: 2,
+    title: "Step 2: Slicing the Sides & Establishing Planes",
+    instruction: "Slice off the sides of the sphere to create the temporal/side planes where the cranium meets the jaw and cheekbone structure.",
+    tips: ["Measure proportions carefully", "Keep side planes balanced"],
+    imageUrl: "https://cdn.corenexis.com/f/uQX5AsXbFcD.png"
+  },
+  {
+    step: 3,
+    title: "Step 3: The Three Equal Divisions & Brow Line",
+    instruction: "Project the brow line and centerline forward. Divide the face vertically into three equal sections (1/3 ratio): hairline-to-brow, brow-to-nose, and nose-to-chin.",
+    tips: ["Maintain dynamic flow", "Account for tilt perspective"],
+    imageUrl: "https://cdn.corenexis.com/f/qi4ja3E9OWf.png"
+  },
+  {
+    step: 4,
+    title: "Step 4: Jaw Structure, Ear Placement & Neck",
+    instruction: "Outline the jawline extending down from the temporal plane. Position the ear between the brow line and nose base, then anchor the neck structure securely.",
+    tips: ["Avoid stiff neck lines", "Let trapezius muscles slope naturally"],
+    imageUrl: "https://cdn.corenexis.com/f/F07fBpQIzDQ.png"
+  },
+  {
+    step: 5,
+    title: "Step 5: Facial Mapping & Contour Construction",
+    instruction: "Map out sockets for the eyes, nose bridge, cheekbones, and lips. Pay attention to foreshortening so the far eye appears narrower.",
+    tips: ["Foreshorten the far eye", "Define shadow core edges"],
+    imageUrl: "https://cdn.corenexis.com/f/8nRov0zsnTT.png"
+  },
+  {
+    step: 6,
+    title: "Step 6: Final Rendering, Shading & Hair Flow",
+    instruction: "Refine contours and apply directional shading following muscle structure and hair flow. Add deep shadow cores and highlights for a 3D finish.",
+    tips: ["Deepen shadows under jaw & chin", "Keep highlights sharp"],
+    imageUrl: "https://cdn.corenexis.com/f/MHi11ZdQQSz.png"
   }
 ];
 
@@ -112,44 +173,14 @@ export default function ChallengesPage() {
   const [totalXp, setTotalXp] = useState<number>(0);
   const [streak, setStreak] = useState<number>(0);
   const [lastActivityDate, setLastActivityDate] = useState<string | null>(null);
-  const [rank, setRank] = useState<number>(1);
   const [completedChallenges, setCompletedChallenges] = useState<string[]>([]);
   
-  // View state: 'hub' or active challenge id
-  const [activeView, setActiveView] = useState<'hub' | 'eye-drawing-1min' | 'lines-practice'>('hub');
+  const [activeView, setActiveView] = useState<'hub' | 'challenge-flow'>('hub');
+  const [selectedCategory, setSelectedCategory] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
+  
   const [currentStep, setCurrentStep] = useState<number>(0);
+  const [activeChallengeId, setActiveChallengeId] = useState<string>('beginner-cube-drawing');
 
-  // Leaderboard state
-  const [leaderboard, setLeaderboard] = useState<Profile[]>([]);
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState<boolean>(true);
-
-  // Helper to fetch & update leaderboard rankings
-  const refreshLeaderboard = useCallback(async (currentUserId: string) => {
-    setLoadingLeaderboard(true);
-    const { data: lbData, error: lbError } = await supabase
-      .from('profiles')
-      .select('*');
-
-    if (lbError) {
-      console.error("Error fetching leaderboard:", lbError.message);
-    } else if (lbData) {
-      const normalizedLb: Profile[] = lbData
-        .map((u: Profile) => ({
-          ...u,
-          xp: u.xp !== undefined && u.xp !== null ? u.xp : (u.total_xp || 0)
-        }))
-        .sort((a: Profile, b: Profile) => (b.xp || 0) - (a.xp || 0));
-
-      setLeaderboard(normalizedLb);
-      const userIndex = normalizedLb.findIndex((u) => u.id === currentUserId);
-      if (userIndex !== -1) {
-        setRank(userIndex + 1);
-      }
-    }
-    setLoadingLeaderboard(false);
-  }, []);
-
-  // Process User & Profile Data
   const processUserData = useCallback(async (user: { id: string; email?: string; user_metadata?: { full_name?: string } }) => {
     if (!user) return;
 
@@ -190,15 +221,11 @@ export default function ChallengesPage() {
       setStreak(userData.streak || 0);
       setLastActivityDate(userData.last_activity_date || null);
       
-      // Safe assignment ensuring it's always an array
       const comp = Array.isArray(userData.completed_challenges) ? userData.completed_challenges : [];
       setCompletedChallenges(comp);
     }
+  }, []);
 
-    await refreshLeaderboard(currentUserId);
-  }, [refreshLeaderboard]);
-
-  // Robust Auth Monitoring & LocalStorage Protection
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn');
     if (!loggedIn) {
@@ -214,7 +241,6 @@ export default function ChallengesPage() {
 
     let isMounted = true;
 
-    // Check session right away
     supabase.auth.getSession().then(async ({ data: { session } }: { data: { session: any } }) => {
       if (session?.user && isMounted) {
         await processUserData(session.user);
@@ -250,7 +276,6 @@ export default function ChallengesPage() {
     };
   }, [router, processUserData, loading]);
 
-  // Handle challenge submission
   const handleFinishChallenge = async (challengeId: string, rewardXp: number) => {
     if (!userId) return;
 
@@ -308,447 +333,351 @@ export default function ChallengesPage() {
           });
 
         if (error) console.error("Supabase upsert error:", error.message);
-        
-        await refreshLeaderboard(userId);
       } catch (err) {
         console.error("Unexpected error saving XP:", err);
       }
     }
   };
 
-  const renderStepIllustration = (type: string) => {
-    return (
-      <div className="w-full h-full flex items-center justify-center p-6">
-        <svg viewBox="0 0 200 120" className="w-48 h-32 drop-shadow-sm">
-          {type === 'vertical-lines' && (
-            <g stroke="#2563EB" strokeWidth="2" strokeLinecap="round">
-              <line x1="40" y1="15" x2="40" y2="105" />
-              <line x1="60" y1="15" x2="60" y2="105" />
-              <line x1="80" y1="15" x2="80" y2="105" />
-              <line x1="100" y1="15" x2="100" y2="105" />
-              <line x1="120" y1="15" x2="120" y2="105" />
-              <line x1="140" y1="15" x2="140" y2="105" />
-              <line x1="160" y1="15" x2="160" y2="105" />
-            </g>
-          )}
-          {type === 'horizontal-lines' && (
-            <g stroke="#2563EB" strokeWidth="2" strokeLinecap="round">
-              <line x1="20" y1="25" x2="180" y2="25" />
-              <line x1="20" y1="40" x2="180" y2="40" />
-              <line x1="20" y1="55" x2="180" y2="55" />
-              <line x1="20" y1="70" x2="180" y2="70" />
-              <line x1="20" y1="85" x2="180" y2="85" />
-              <line x1="20" y1="100" x2="180" y2="100" />
-            </g>
-          )}
-          {type === 'grid-lines' && (
-            <g stroke="#2563EB" strokeWidth="2" strokeLinecap="round" opacity="0.9">
-              <line x1="40" y1="15" x2="40" y2="105" />
-              <line x1="80" y1="15" x2="80" y2="105" />
-              <line x1="120" y1="15" x2="120" y2="105" />
-              <line x1="160" y1="15" x2="160" y2="105" />
-              <line x1="20" y1="30" x2="180" y2="30" />
-              <line x1="20" y1="60" x2="180" y2="60" />
-              <line x1="20" y1="90" x2="180" y2="90" />
-            </g>
-          )}
-          {type === 'outline' && (
-            <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
-          )}
-          {type === 'iris' && (
-            <>
-              <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
-              <circle cx="100" cy="60" r="28" stroke="#2563EB" strokeWidth="2" fill="none" />
-              <circle cx="100" cy="60" r="12" fill="#1E3A8A" />
-              <circle cx="93" cy="53" r="3.5" fill="#FFFFFF" />
-            </>
-          )}
-          {type === 'eyelids' && (
-            <>
-              <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
-              <circle cx="100" cy="60" r="28" stroke="#2563EB" strokeWidth="2" fill="none" />
-              <circle cx="100" cy="60" r="12" fill="#1E3A8A" />
-              <circle cx="93" cy="53" r="3.5" fill="#FFFFFF" />
-              <path d="M35 42 C 75 22, 125 22, 165 42" fill="none" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round" />
-            </>
-          )}
-          {type === 'eyelashes' && (
-            <>
-              <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
-              <circle cx="100" cy="60" r="28" stroke="#2563EB" strokeWidth="2" fill="none" />
-              <circle cx="100" cy="60" r="12" fill="#1E3A8A" />
-              <circle cx="93" cy="53" r="3.5" fill="#FFFFFF" />
-              <path d="M35 42 C 75 22, 125 22, 165 42" fill="none" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round" />
-              <g stroke="#1E3A8A" strokeWidth="2" strokeLinecap="round">
-                <line x1="45" y1="50" x2="38" y2="38" />
-                <line x1="65" y1="36" x2="62" y2="23" />
-                <line x1="85" y1="32" x2="86" y2="17" />
-                <line x1="115" y1="32" x2="114" y2="17" />
-                <line x1="135" y1="36" x2="138" y2="23" />
-                <line x1="155" y1="50" x2="162" y2="38" />
-              </g>
-            </>
-          )}
-          {type === 'shading' && (
-            <>
-              <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="3" />
-              <circle cx="100" cy="60" r="28" fill="#1E40AF" opacity="0.2" stroke="#2563EB" strokeWidth="2" />
-              <circle cx="100" cy="60" r="12" fill="#1E3A8A" />
-              <circle cx="93" cy="53" r="3.5" fill="#FFFFFF" />
-              <path d="M35 42 C 75 22, 125 22, 165 42" fill="none" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M20 60 C 60 105, 140 105, 180 60 C 140 85, 60 85, 20 60 Z" fill="#93C5FD" opacity="0.4" />
-            </>
-          )}
-          {type === 'final' && (
-            <>
-              <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#1E3A8A" strokeWidth="3.5" />
-              <circle cx="100" cy="60" r="28" fill="#1E40AF" opacity="0.3" stroke="#2563EB" strokeWidth="2" />
-              <circle cx="100" cy="60" r="12" fill="#1E3A8A" />
-              <circle cx="93" cy="53" r="3.5" fill="#FFFFFF" />
-              <path d="M35 42 C 75 22, 125 22, 165 42" fill="none" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round" />
-            </>
-          )}
-        </svg>
-      </div>
-    );
+  const renderStepIllustration = (imageUrl?: string) => {
+    if (imageUrl) {
+      return (
+        <div className="w-full h-full flex items-center justify-center p-2">
+          <img src={imageUrl} alt="Step reference" className="max-h-80 w-full object-contain rounded-xl shadow-sm" />
+        </div>
+      );
+    }
+    return null;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/20 text-white font-bold flex items-center gap-3 shadow-xl">
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-xs tracking-wider uppercase">Checking Session...</span>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white px-6 py-4 rounded-2xl border border-blue-100 text-slate-900 font-bold flex items-center gap-3 shadow-xl">
+          <div className="w-5 h-5 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-xs tracking-wider uppercase text-orange-600">Checking Session...</span>
         </div>
       </div>
     );
   }
 
-  const currentStepsList = activeView === 'lines-practice' ? LINES_STEPS : EYE_STEPS;
-  const currentChallengeId = activeView === 'lines-practice' ? 'lines-practice' : 'eye-drawing-1min';
-  const currentChallengeReward = activeView === 'lines-practice' ? 50 : 100;
+  const getCurrentStepsList = () => {
+    if (activeChallengeId === 'beginner-cube-drawing') return CUBE_STEPS;
+    if (activeChallengeId === 'advanced-portrait-loomis') return PORTRAIT_STEPS;
+    return EYE_STEPS;
+  };
+
+  const currentStepsList = getCurrentStepsList();
   
-  // Safe Array check to completely prevent .includes runtime crash
+  const getCurrentChallengeReward = () => {
+    if (activeChallengeId === 'beginner-cube-drawing') return 80;
+    if (activeChallengeId === 'advanced-portrait-loomis') return 120;
+    return 100;
+  };
+
+  const currentChallengeReward = getCurrentChallengeReward();
+  
   const safeCompletedChallenges = Array.isArray(completedChallenges) ? completedChallenges : [];
-  const isCurrentCompleted = safeCompletedChallenges.includes(currentChallengeId);
+  const isCurrentCompleted = safeCompletedChallenges.includes(activeChallengeId);
 
   return (
-    <div className="min-h-screen font-sans bg-gradient-to-br from-blue-600 to-blue-800 text-slate-900 p-4 md:p-10 flex flex-col items-center">
+    <div className="min-h-screen font-sans bg-slate-50 text-slate-900 p-4 md:p-10 flex flex-col items-center">
       <div className="max-w-4xl w-full space-y-8">
         
         {/* Navigation Bar */}
-        <div className="bg-white p-4 rounded-2xl shadow-md flex justify-between items-center">
+        <div className="bg-white border border-blue-100 p-4 rounded-2xl shadow-sm flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold border border-blue-100 flex-shrink-0">
+            <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center font-bold border border-orange-200 flex-shrink-0">
               <Target className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900">Challenges & Leaderboard</h2>
-              <p className="text-[11px] text-slate-500 hidden sm:block">Master drawing skills and compete on the community leaderboard.</p>
+              <h2 className="text-sm font-bold text-slate-900">Challenges Hub</h2>
+              <p className="text-[11px] text-slate-500 hidden sm:block">Master drawing skills and track your personal progress.</p>
             </div>
           </div>
           <button 
             onClick={() => { router.push('/dashboard'); }}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 cursor-pointer flex-shrink-0"
+            className="bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 rounded-2xl font-bold text-xs transition flex items-center gap-2 cursor-pointer flex-shrink-0 border border-blue-100"
           >
-            <ArrowLeft className="w-4 h-4" /> Dashboard
+            <ArrowLeft className="w-4 h-4 text-orange-600" /> Dashboard
           </button>
         </div>
 
         {activeView === 'hub' ? (
-          <>
+          <div className="space-y-8">
             {/* Hero Stats Card */}
-            <div className="bg-blue-900 text-white p-6 md:p-8 rounded-3xl shadow-xl border border-blue-800 space-y-6 flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="space-y-3 max-w-lg text-center md:text-left">
-                <div className="inline-flex items-center gap-1.5 bg-blue-800 text-blue-200 border border-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                  <Trophy className="w-3.5 h-3.5 text-amber-400" /> Learning Path
+            <div className="bg-white text-slate-900 p-6 md:p-8 rounded-3xl shadow-sm border-2 border-blue-900 space-y-6 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
+              <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-orange-50 rounded-full blur-2xl pointer-events-none"></div>
+              
+              <div className="space-y-3 max-w-lg text-center md:text-left z-10">
+                <div className="inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 border border-orange-200 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                  <Trophy className="w-3.5 h-3.5 text-orange-600" /> Learning Path
                 </div>
-                <h1 className="text-2xl md:text-4xl font-black tracking-tight text-white">Improve Your Drawing Skills</h1>
-                <p className="text-blue-200 text-xs md:text-sm leading-relaxed">
-                  Complete challenges, earn XP and maintain your daily streak synchronized to your Supabase profile.
+                <h1 className="text-2xl md:text-4xl font-black tracking-tight text-slate-900">Improve Your Drawing Skills</h1>
+                <p className="text-slate-600 text-xs md:text-sm leading-relaxed">
+                  Complete challenges across different skill levels, earn XP and maintain your daily streak.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 bg-blue-950/80 p-4 rounded-2xl border border-blue-800 w-full md:w-auto">
+              <div className="grid grid-cols-2 gap-3 bg-blue-50/50 p-4 rounded-2xl border border-blue-100 w-full md:w-auto z-10">
                 <div className="text-center px-3 py-1">
-                  <span className="text-[10px] text-blue-300 uppercase font-bold block">Rank</span>
-                  <span className="text-base font-black text-amber-400 flex items-center justify-center gap-1">
-                    <Award className="w-3.5 h-3.5" /> #{rank}
-                  </span>
-                </div>
-                <div className="text-center px-3 py-1 border-l border-blue-800">
-                  <span className="text-[10px] text-blue-300 uppercase font-bold block">Total XP</span>
-                  <span className="text-base font-black text-emerald-400 flex items-center justify-center gap-1">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">Total XP</span>
+                  <span className="text-base font-black text-orange-600 flex items-center justify-center gap-1">
                     <Star className="w-3.5 h-3.5" /> {totalXp}
                   </span>
                 </div>
-                <div className="text-center px-3 py-1 border-t border-blue-800 pt-2">
-                  <span className="text-[10px] text-blue-300 uppercase font-bold block">Completed</span>
-                  <span className="text-base font-black text-blue-300 flex items-center justify-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5" /> {safeCompletedChallenges.length}
-                  </span>
-                </div>
-                <div className="text-center px-3 py-1 border-l border-t border-blue-800 pt-2">
-                  <span className="text-[10px] text-blue-300 uppercase font-bold block">Streak</span>
-                  <span className="text-base font-black text-orange-400 flex items-center justify-center gap-1">
+                <div className="text-center px-3 py-1 border-l border-blue-100">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">Streak</span>
+                  <span className="text-base font-black text-orange-600 flex items-center justify-center gap-1">
                     <Flame className="w-3.5 h-3.5" /> {streak}d
                   </span>
                 </div>
+                <div className="text-center px-3 py-1 border-t border-blue-100 pt-2 col-span-2">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">Completed Challenges</span>
+                  <span className="text-base font-black text-slate-900 flex items-center justify-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-orange-600" /> {safeCompletedChallenges.length} / 3
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Featured Challenge Card 1: Eye Drawing */}
-            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-slate-200 space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl uppercase tracking-wider shadow-sm flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Featured Masterclass
-              </div>
+            {/* LEVEL SELECTION TABS */}
+            <div className="grid grid-cols-3 gap-2 bg-blue-100/60 p-1.5 rounded-2xl border border-blue-200">
+              <button
+                onClick={() => setSelectedCategory('beginner')}
+                className={`py-3 px-4 rounded-xl font-black text-xs md:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
+                  selectedCategory === 'beginner' 
+                    ? 'bg-orange-600 text-white shadow-md' 
+                    : 'bg-white/80 text-slate-700 hover:bg-white'
+                }`}
+              >
+                <Layers className="w-4 h-4" /> Beginner
+              </button>
+              <button
+                onClick={() => setSelectedCategory('intermediate')}
+                className={`py-3 px-4 rounded-xl font-black text-xs md:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
+                  selectedCategory === 'intermediate' 
+                    ? 'bg-orange-600 text-white shadow-md' 
+                    : 'bg-white/80 text-slate-700 hover:bg-white'
+                }`}
+              >
+                <Zap className="w-4 h-4" /> Intermediate
+              </button>
+              <button
+                onClick={() => setSelectedCategory('advanced')}
+                className={`py-3 px-4 rounded-xl font-black text-xs md:text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
+                  selectedCategory === 'advanced' 
+                    ? 'bg-orange-600 text-white shadow-md' 
+                    : 'bg-white/80 text-slate-700 hover:bg-white'
+                }`}
+              >
+                <Trophy className="w-4 h-4" /> Advanced
+              </button>
+            </div>
 
-              <div className="flex flex-col md:flex-row gap-6 items-center pt-2 md:pt-0">
-                <div className="w-28 h-24 bg-blue-50 rounded-2xl flex items-center justify-center border border-blue-100 flex-shrink-0 overflow-hidden shadow-inner">
-                  <svg viewBox="0 0 200 120" className="w-24 h-16">
-                    <path d="M20 60 C 60 15, 140 15, 180 60 C 140 105, 60 105, 20 60 Z" fill="none" stroke="#2563EB" strokeWidth="4" />
-                    <circle cx="100" cy="60" r="24" fill="#3B82F6" opacity="0.2" stroke="#2563EB" strokeWidth="2" />
-                    <circle cx="100" cy="60" r="10" fill="#1E3A8A" />
-                    <circle cx="94" cy="54" r="3" fill="#FFFFFF" />
-                  </svg>
+            {/* CONDITIONAL CONTENT BASED ON SELECTED TAB */}
+            {selectedCategory === 'beginner' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-green-50 text-green-600 flex items-center justify-center font-bold border border-green-200">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900">Beginner Level Lessons</h3>
+                    <p className="text-xs text-slate-500">Essential fundamentals for starters</p>
+                  </div>
                 </div>
 
-                <div className="space-y-2 flex-1 text-center md:text-left">
-                  <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                    <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg">Beginner Level</span>
-                    <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-lg">+100 XP Reward</span>
-                    <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> 5 Minutes
-                    </span>
+                {/* Challenge Card: Learn to Draw a Cube */}
+                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border-2 border-blue-900 space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-orange-600 text-white text-[10px] font-extrabold px-4 py-1.5 rounded-bl-2xl uppercase tracking-wider shadow-sm flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-white" /> Beginner Essential
                   </div>
 
-                  <h3 className="text-xl md:text-2xl font-black text-slate-900">Eye Drawing Under 1 Minute</h3>
-                  <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-                    Learn to draw a realistic eye step-by-step through guided learning modules and professional reference breakdowns.
-                  </p>
-                </div>
+                  <div className="flex flex-col md:flex-row gap-6 items-center pt-2 md:pt-0">
+                    <div className="w-28 h-24 bg-blue-50/50 rounded-2xl flex items-center justify-center border border-blue-100 flex-shrink-0 overflow-hidden shadow-inner">
+                      <img src="https://cdn.corenexis.com/f/YYS6Kpptv7X.png" alt="Cube Preview" className="w-full h-full object-cover" />
+                    </div>
 
-                <div className="w-full md:w-auto flex flex-col gap-2 items-center">
-                  <button
-                    onClick={() => { setActiveView('eye-drawing-1min'); setCurrentStep(0); }}
-                    className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-md transition text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    {safeCompletedChallenges.includes('eye-drawing-1min') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
-                  </button>
-                  {safeCompletedChallenges.includes('eye-drawing-1min') && (
-                    <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                      <CheckCircle className="w-3.5 h-3.5" /> Completed (+100 XP Claimed)
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+                    <div className="space-y-2 flex-1 text-center md:text-left">
+                      <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                        <span className="bg-green-50 text-green-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-green-200">Beginner</span>
+                        <span className="bg-orange-50 text-orange-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-orange-200">+80 XP Reward</span>
+                        <span className="bg-blue-50 text-orange-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-blue-100 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> 5 Minutes
+                        </span>
+                      </div>
 
-            {/* Featured Challenge Card 2: Vertical & Horizontal Lines Practice */}
-            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-slate-200 space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-2xl uppercase tracking-wider shadow-sm flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Skill Builder
-              </div>
+                      <h4 className="text-xl md:text-2xl font-black text-slate-900">Learn to Draw a 3D Cube</h4>
+                      <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                        Master basic perspective, intersecting lines, and surface shading to build your foundational 3D drawing skills.
+                      </p>
+                    </div>
 
-              <div className="flex flex-col md:flex-row gap-6 items-center pt-2 md:pt-0">
-                <div className="w-28 h-24 bg-emerald-50 rounded-2xl flex items-center justify-center border border-emerald-100 flex-shrink-0 overflow-hidden shadow-inner">
-                  <svg viewBox="0 0 200 120" className="w-24 h-16">
-                    <line x1="60" y1="15" x2="60" y2="105" stroke="#059669" strokeWidth="3" />
-                    <line x1="100" y1="15" x2="100" y2="105" stroke="#059669" strokeWidth="3" />
-                    <line x1="140" y1="15" x2="140" y2="105" stroke="#059669" strokeWidth="3" />
-                    <line x1="30" y1="45" x2="170" y2="45" stroke="#059669" strokeWidth="3" />
-                    <line x1="30" y1="75" x2="170" y2="75" stroke="#059669" strokeWidth="3" />
-                  </svg>
-                </div>
-
-                <div className="space-y-2 flex-1 text-center md:text-left">
-                  <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                    <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg">Foundation</span>
-                    <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-lg">+50 XP Reward</span>
-                    <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> 3 Minutes
-                    </span>
-                  </div>
-
-                  <h3 className="text-xl md:text-2xl font-black text-slate-900">Vertical & Horizontal Lines Practice</h3>
-                  <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
-                    Practice drawing straight vertical and vice versa horizontal lines across the entire page to build steady hand control and precision.
-                  </p>
-                </div>
-
-                <div className="w-full md:w-auto flex flex-col gap-2 items-center">
-                  <button
-                    onClick={() => { setActiveView('lines-practice'); setCurrentStep(0); }}
-                    className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3.5 rounded-2xl shadow-md transition text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    {safeCompletedChallenges.includes('lines-practice') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
-                  </button>
-                  {safeCompletedChallenges.includes('lines-practice') && (
-                    <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                      <CheckCircle className="w-3.5 h-3.5" /> Completed (+50 XP Claimed)
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* LEADERBOARD SECTION */}
-            <div className="bg-slate-900 text-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-800 space-y-6">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-                <h3 className="font-extrabold text-base uppercase tracking-wider text-slate-100 flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-amber-400" /> Leaderboard Rankings
-                </h3>
-                <span className="text-xs text-blue-400 font-bold">Live Supabase Sync</span>
-              </div>
-
-              {loadingLeaderboard ? (
-                <div className="text-center py-10 text-xs text-slate-400 font-medium">
-                  Loading leaderboard from database...
-                </div>
-              ) : leaderboard.length === 0 ? (
-                <div className="bg-slate-800/80 border border-slate-700 p-8 rounded-2xl text-center">
-                  <p className="text-sm text-slate-300 font-bold">No artists ranked yet</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* TOP 3 PODIUM SECTION */}
-                  {leaderboard.length >= 1 && (
-                    <div className="flex justify-center items-end gap-2 sm:gap-3 pt-6 pb-4">
-                      {/* 2nd Place */}
-                      {leaderboard[1] && (
-                        <div className="flex flex-col items-center space-y-2 w-24 sm:w-28">
-                          <div className="relative">
-                            <div className="w-12 h-12 bg-slate-800 border-2 border-slate-600 rounded-2xl flex items-center justify-center font-bold text-white text-lg shadow-md">
-                              {(leaderboard[1]?.name || 'U').charAt(0).toUpperCase()}
-                            </div>
-                            <span className="absolute -top-3 -right-1 text-base">🥈</span>
-                          </div>
-                          <div className="text-center truncate w-full">
-                            <h4 className="font-bold text-xs text-slate-200 truncate">{leaderboard[1]?.name || 'User'}</h4>
-                            <p className="text-[10px] text-slate-400">Level {Math.floor((leaderboard[1]?.xp || 0) / 100) + 1}</p>
-                          </div>
-                          <div className="bg-slate-800/90 border border-slate-700 rounded-xl py-2 px-3 w-full text-center shadow-inner">
-                            <span className="text-slate-300 font-black text-xs block">{leaderboard[1]?.xp || 0}</span>
-                            <span className="text-[9px] text-slate-400 uppercase tracking-wider">pts</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 1st Place */}
-                      {leaderboard[0] && (
-                        <div className="flex flex-col items-center space-y-2 w-28 sm:w-32 -mt-6">
-                          <div className="relative">
-                            <div className="w-14 h-14 bg-amber-500 border-2 border-amber-300 rounded-2xl flex items-center justify-center font-black text-slate-950 text-xl shadow-lg">
-                              {(leaderboard[0]?.name || 'U').charAt(0).toUpperCase()}
-                            </div>
-                            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-xl">👑</span>
-                          </div>
-                          <div className="text-center truncate w-full">
-                            <h4 className="font-extrabold text-sm text-white truncate">{leaderboard[0]?.name || 'User'}</h4>
-                            <p className="text-[10px] text-amber-300 font-semibold">Level {Math.floor((leaderboard[0]?.xp || 0) / 100) + 1}</p>
-                          </div>
-                          <div className="bg-amber-500/10 border border-amber-400/40 rounded-xl py-2.5 px-3 w-full text-center shadow-inner">
-                            <span className="text-amber-400 font-black text-sm block">{leaderboard[0]?.xp || 0}</span>
-                            <span className="text-[9px] text-amber-300 uppercase tracking-wider">pts</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 3rd Place */}
-                      {leaderboard[2] && (
-                        <div className="flex flex-col items-center space-y-2 w-24 sm:w-28">
-                          <div className="relative">
-                            <div className="w-12 h-12 bg-amber-900/60 border-2 border-amber-700 rounded-2xl flex items-center justify-center font-bold text-white text-lg shadow-md">
-                              {(leaderboard[2]?.name || 'U').charAt(0).toUpperCase()}
-                            </div>
-                            <span className="absolute -top-3 -right-1 text-base">🥉</span>
-                          </div>
-                          <div className="text-center truncate w-full">
-                            <h4 className="font-bold text-xs text-slate-200 truncate">{leaderboard[2]?.name || 'User'}</h4>
-                            <p className="text-[10px] text-slate-400">Level {Math.floor((leaderboard[2]?.xp || 0) / 100) + 1}</p>
-                          </div>
-                          <div className="bg-slate-800/90 border border-slate-700 rounded-xl py-2 px-3 w-full text-center shadow-inner">
-                            <span className="text-amber-600 font-black text-xs block">{leaderboard[2]?.xp || 0}</span>
-                            <span className="text-[9px] text-slate-400 uppercase tracking-wider">pts</span>
-                          </div>
-                        </div>
+                    <div className="w-full md:w-auto flex flex-col gap-2 items-center">
+                      <button
+                        onClick={() => { 
+                          setActiveChallengeId('beginner-cube-drawing');
+                          setActiveView('challenge-flow'); 
+                          setCurrentStep(0); 
+                        }}
+                        className="w-full md:w-auto bg-orange-600 hover:bg-orange-700 text-white font-black px-6 py-3.5 rounded-2xl shadow-sm transition text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {safeCompletedChallenges.includes('beginner-cube-drawing') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
+                      </button>
+                      {safeCompletedChallenges.includes('beginner-cube-drawing') && (
+                        <span className="text-[10px] text-orange-700 font-bold flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5" /> Completed (+80 XP Claimed)
+                        </span>
                       )}
                     </div>
-                  )}
-
-                  {/* 4TH RANK ONWARDS */}
-                  <div className="space-y-2 pt-2">
-                    {leaderboard.slice(3).map((user, idx) => {
-                      const rankNum = idx + 4;
-                      const isCurrentUser = user.id === userId;
-                      return (
-                        <div 
-                          key={user.id || idx} 
-                          className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${
-                            isCurrentUser 
-                              ? 'bg-blue-950 border-blue-500 shadow-md ring-1 ring-blue-500' 
-                              : 'bg-slate-800/80 border-slate-700 hover:bg-slate-800'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3 sm:gap-4 truncate">
-                            <span className="font-black text-amber-500 text-sm w-6 flex-shrink-0">#{rankNum}</span>
-                            <div className="w-10 h-10 bg-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
-                              {(user.name || 'A').charAt(0).toUpperCase()}
-                            </div>
-                            <div className="truncate">
-                              <div className="flex items-center gap-2 truncate">
-                                <h4 className="font-bold text-sm text-white truncate">
-                                  {user.name || `Artist #${rankNum}`}
-                                </h4>
-                                {isCurrentUser && (
-                                  <span className="bg-blue-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider flex-shrink-0">
-                                    You
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-slate-400">
-                                Level {Math.floor((user.xp || 0) / 100) + 1} Artist
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="text-right flex-shrink-0 pl-2">
-                            <span className="font-black text-white text-sm block">
-                              {user.xp || 0}
-                            </span>
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider">
-                              pts
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
                   </div>
                 </div>
-              )}
-            </div>
-          </>
+              </div>
+            )}
+
+            {selectedCategory === 'intermediate' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold border border-amber-200">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900">Intermediate Level Lessons</h3>
+                    <p className="text-xs text-slate-500">Refine proportions, shading, and depth</p>
+                  </div>
+                </div>
+
+                {/* Challenge Card: Eye Drawing */}
+                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border-2 border-blue-900 space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-orange-600 text-white text-[10px] font-extrabold px-4 py-1.5 rounded-bl-2xl uppercase tracking-wider shadow-sm flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-white" /> Featured Masterclass
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-6 items-center pt-2 md:pt-0">
+                    <div className="w-28 h-24 bg-blue-50/50 rounded-2xl flex items-center justify-center border border-blue-100 flex-shrink-0 overflow-hidden shadow-inner">
+                      <img src="https://cdn.corenexis.com/f/jGJJCV2Bi2l.png" alt="Eye Preview" className="w-full h-full object-cover" />
+                    </div>
+
+                    <div className="space-y-2 flex-1 text-center md:text-left">
+                      <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                        <span className="bg-amber-50 text-amber-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-amber-200">Intermediate</span>
+                        <span className="bg-orange-50 text-orange-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-orange-200">+100 XP Reward</span>
+                        <span className="bg-blue-50 text-orange-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-blue-100 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> 5 Minutes
+                        </span>
+                      </div>
+
+                      <h4 className="text-xl md:text-2xl font-black text-slate-900">Eye Drawing Under 5 Minutes</h4>
+                      <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                        Learn to draw a realistic eye step-by-step through guided learning modules and professional reference breakdowns.
+                      </p>
+                    </div>
+
+                    <div className="w-full md:w-auto flex flex-col gap-2 items-center">
+                      <button
+                        onClick={() => { 
+                          setActiveChallengeId('eye-drawing-1min');
+                          setActiveView('challenge-flow'); 
+                          setCurrentStep(0); 
+                        }}
+                        className="w-full md:w-auto bg-orange-600 hover:bg-orange-700 text-white font-black px-6 py-3.5 rounded-2xl shadow-sm transition text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {safeCompletedChallenges.includes('eye-drawing-1min') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
+                      </button>
+                      {safeCompletedChallenges.includes('eye-drawing-1min') && (
+                        <span className="text-[10px] text-orange-700 font-bold flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5" /> Completed (+100 XP Claimed)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedCategory === 'advanced' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold border border-purple-200">
+                    <Trophy className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900">Advanced Level Lessons</h3>
+                    <p className="text-xs text-slate-500">Complex anatomy & masterclass execution</p>
+                  </div>
+                </div>
+
+                {/* Challenge Card: Master Face Outline by Loomis Method */}
+                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border-2 border-blue-900 space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-orange-600 text-white text-[10px] font-extrabold px-4 py-1.5 rounded-bl-2xl uppercase tracking-wider shadow-sm flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-white" /> Featured Masterclass
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-6 items-center pt-2 md:pt-0">
+                    <div className="w-28 h-24 bg-blue-50/50 rounded-2xl flex items-center justify-center border border-blue-100 flex-shrink-0 overflow-hidden shadow-inner">
+                      <img src="https://cdn.corenexis.com/f/MHi11ZdQQSz.png" alt="Portrait Preview" className="w-full h-full object-cover" />
+                    </div>
+
+                    <div className="space-y-2 flex-1 text-center md:text-left">
+                      <div className="flex flex-wrap justify-center md:justify-start gap-2">
+                        <span className="bg-purple-50 text-purple-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-purple-200">Advanced</span>
+                        <span className="bg-orange-50 text-orange-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-orange-200">+120 XP Reward</span>
+                        <span className="bg-blue-50 text-orange-700 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-blue-100 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> 10 Minutes
+                        </span>
+                      </div>
+
+                      <h4 className="text-xl md:text-2xl font-black text-slate-900">Master Face Outline by Loomis Method</h4>
+                      <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                        Learn advanced 3/4 view portrait construction, facial proportions, and structural shading using the classic Loomis method.
+                      </p>
+                    </div>
+
+                    <div className="w-full md:w-auto flex flex-col gap-2 items-center">
+                      <button
+                        onClick={() => { 
+                          setActiveChallengeId('advanced-portrait-loomis');
+                          setActiveView('challenge-flow'); 
+                          setCurrentStep(0); 
+                        }}
+                        className="w-full md:w-auto bg-orange-600 hover:bg-orange-700 text-white font-black px-6 py-3.5 rounded-2xl shadow-sm transition text-xs tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {safeCompletedChallenges.includes('advanced-portrait-loomis') ? 'Review Challenge' : 'Start Challenge'} <ArrowRight className="w-4 h-4" />
+                      </button>
+                      {safeCompletedChallenges.includes('advanced-portrait-loomis') && (
+                        <span className="text-[10px] text-orange-700 font-bold flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5" /> Completed (+120 XP Claimed)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
         ) : (
           /* LEARNING STEP-BY-STEP VIEW */
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-slate-200 space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border-2 border-blue-900 space-y-6">
+            <div className="flex justify-between items-center border-b border-blue-100 pb-4">
               <div>
-                <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-lg uppercase">
+                <span className="text-[10px] font-extrabold bg-orange-50 text-orange-700 border border-orange-200 px-3 py-1 rounded-lg uppercase">
                   Step {currentStep + 1} of {currentStepsList.length}
                 </span>
-                <h3 className="text-xl font-black text-slate-900 mt-1">{currentStepsList[currentStep].title}</h3>
+                <h3 className="text-xl font-black text-slate-900 mt-2">{currentStepsList[currentStep].title}</h3>
               </div>
               <button 
                 onClick={() => setActiveView('hub')}
-                className="text-xs font-bold text-slate-500 hover:text-slate-800 bg-slate-100 px-3 py-1.5 rounded-xl transition cursor-pointer"
+                className="text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 px-3 py-1.5 rounded-2xl transition cursor-pointer border border-blue-100"
               >
                 Exit Challenge
               </button>
             </div>
 
             {/* Step Illustration */}
-            <div className="w-full h-56 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center shadow-inner">
-              {renderStepIllustration(currentStepsList[currentStep].svgType)}
+            <div className="w-full h-80 bg-blue-50/50 border border-blue-100 rounded-2xl flex items-center justify-center shadow-inner overflow-hidden p-2">
+              {renderStepIllustration(currentStepsList[currentStep].imageUrl)}
             </div>
 
             {/* Instructions & Tips */}
@@ -757,12 +686,12 @@ export default function ChallengesPage() {
                 {currentStepsList[currentStep].instruction}
               </p>
 
-              <div className="bg-blue-50/60 border border-blue-100 p-4 rounded-2xl space-y-2">
-                <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wider">Pro Tips:</h4>
+              <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-2xl space-y-2">
+                <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider">Pro Tips:</h4>
                 <ul className="space-y-1">
                   {currentStepsList[currentStep].tips.map((tip, idx) => (
-                    <li key={idx} className="text-xs text-blue-800 flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> {tip}
+                    <li key={idx} className="text-xs text-slate-600 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-600"></span> {tip}
                     </li>
                   ))}
                 </ul>
@@ -770,11 +699,11 @@ export default function ChallengesPage() {
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+            <div className="flex justify-between items-center pt-4 border-top border-blue-100">
               <button
                 onClick={() => setCurrentStep(prev => Math.max(0, prev - 1))}
                 disabled={currentStep === 0}
-                className="px-5 py-2.5 rounded-xl font-bold text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 transition cursor-pointer"
+                className="px-5 py-2.5 rounded-xl font-bold text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40 transition cursor-pointer border border-blue-100"
               >
                 Previous Step
               </button>
@@ -782,16 +711,16 @@ export default function ChallengesPage() {
               {currentStep < currentStepsList.length - 1 ? (
                 <button
                   onClick={() => setCurrentStep(prev => Math.min(currentStepsList.length - 1, prev + 1))}
-                  className="px-6 py-2.5 rounded-xl font-bold text-xs bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-1 shadow-sm cursor-pointer"
+                  className="px-6 py-2.5 rounded-xl font-bold text-xs bg-orange-600 text-white hover:bg-orange-700 transition flex items-center gap-1 shadow-sm cursor-pointer"
                 >
                   Next Step <ArrowRight className="w-4 h-4" />
                 </button>
               ) : (
                 <button
                   onClick={async () => {
-                    await handleFinishChallenge(currentChallengeId, currentChallengeReward);
+                    await handleFinishChallenge(activeChallengeId, currentChallengeReward);
                   }}
-                  className="px-6 py-3 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-2 shadow-md cursor-pointer"
+                  className="px-6 py-3 rounded-xl font-black text-xs bg-orange-600 text-white hover:bg-orange-700 transition flex items-center gap-2 shadow-sm cursor-pointer"
                 >
                   <Check className="w-4 h-4" /> {isCurrentCompleted ? 'Finish & Return' : `Finish & Claim +${currentChallengeReward} XP`}
                 </button>

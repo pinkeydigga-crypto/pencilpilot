@@ -14,9 +14,9 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  
+ 
   const [formData, setFormData] = useState({
-    artStyle: 'Sketching',
+    artStyle: 'Sketching', // Default to Sketching
     language: 'Hinglish',
     skillLevel: 'Beginner',
     goal: 'Improve Anatomy',
@@ -84,26 +84,26 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-[#E8ECF2] flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
-      
-      {/* Minimal, Subtle, Tiny Art Pattern matching reference density & transparency */}
-      <div 
-        className="absolute inset-0 z-0 pointer-events-none opacity-25" 
-        style={{ 
+     
+      {/* Minimal, Subtle, Tiny Art Pattern */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none opacity-25"
+        style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='none' stroke='%23475569' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3C!-- Tiny Pencil --%3E%3Cpath d='M40 50l16-16 5 5-16 16-7 2 2-7z'/%3E%3Cpath d='M50 40l5 5'/%3E%3C!-- Tiny Paint Brush --%3E%3Cpath d='M160 45c-1 1-2 3-2 5l-8 8c-1 1-1 3 0 4s3 1 4 0l8-8c1 0 3-1 4-2l-6-7z'/%3E%3Cpath d='M150 58l-5 5c-2 2-2 5 0 7s5 2 7 0l5-5'/%3E%3C!-- Tiny Paint Palette --%3E%3Cpath d='M45 160c-8 0-14 6-14 13s6 11 11 11c3 0 5-2 5-5 0-2-1-3-1-4 0-3 2-5 5-5 5 0 8-4 8-9 0-6-6-9-14-9z'/%3E%3Ccircle cx='40' cy='168' r='1.5' fill='%23475569'/%3E%3Ccircle cx='48' cy='164' r='1.5' fill='%23475569'/%3E%3Ccircle cx='54' cy='170' r='1.5' fill='%23475569'/%3E%3C!-- Another Tiny Pencil diagonal --%3E%3Cpath d='M140 150l16-16 5 5-16 16-7 2 2-7z'/%3E%3C/g%3E%3C/svg%3E")`,
           backgroundSize: '220px 220px'
-        }} 
+        }}
       />
 
-      {/* Main Container Wrapper with proper top padding */}
+      {/* Main Container Wrapper */}
       <div className="max-w-xl w-full relative pt-20">
 
         {/* Side Waving Mascot */}
         <div className="absolute top-2 -left-2 sm:-left-6 z-20 flex items-center gap-2 pointer-events-none">
           <div className="w-16 h-16 sm:w-20 sm:h-20 relative flex items-center justify-center drop-shadow-md">
-            <Image 
-              src="https://cdn.corenexis.com/f/9YeR8BOGZFJ.png" 
-              alt="DoodleFox Mascot" 
-              fill 
+            <Image
+              src="https://cdn.corenexis.com/f/9YeR8BOGZFJ.png"
+              alt="DoodleFox Mascot"
+              fill
               unoptimized
               className="object-contain mix-blend-multiply"
             />
@@ -116,12 +116,12 @@ export default function OnboardingPage() {
 
         {/* Main Form Card */}
         <div className="bg-white/95 backdrop-blur-xl rounded-[2.5rem] border border-slate-200 p-8 shadow-xl shadow-slate-200/50 space-y-6 relative z-10">
-          
+         
           {/* Top Back Button & Progress Bars Indicator */}
           <div className="flex items-center gap-4">
             {step > 1 ? (
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={handlePrev}
                 className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition-all cursor-pointer shrink-0"
               >
@@ -135,8 +135,8 @@ export default function OnboardingPage() {
 
             <div className="flex-1 grid grid-cols-4 gap-2">
               {[1, 2, 3, 4].map((i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     i <= step ? 'bg-[#FF8A00]' : 'bg-slate-100'
                   }`}
@@ -147,7 +147,7 @@ export default function OnboardingPage() {
 
           <div className="bg-orange-50/70 p-4 rounded-2xl border border-orange-100/80">
             <p className="text-xs text-slate-700 font-semibold leading-relaxed text-center">
-              {step === 1 && "Select your primary art style so DoodleFox can give you custom critique."}
+              {step === 1 && "Select your primary art focus so DoodleFox can give you custom critique."}
               {step === 2 && "Tell us your current skill level to adjust feedback depth."}
               {step === 3 && "What is your main drawing goal right now?"}
               {step === 4 && "Almost done! Enter your account details to save your DoodleFox profile."}
@@ -160,29 +160,35 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* STEP 1: Art Style */}
+          {/* STEP 1: Art Style (Sirf Sketching aur Drawing) */}
           {step === 1 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-black text-[#1E2A44] tracking-tight">
-                What is your primary art style?
+                What do you want to focus on?
               </h2>
-              <div className="grid grid-cols-2 gap-3.5">
-                {['Sketching', 'Portrait', 'Anime / Manga', 'Digital Art'].map((style) => (
+              <div className="grid grid-cols-1 gap-3.5">
+                {[
+                  { title: 'Sketching', desc: 'Focus on pencil sketches, shading, and linework.' },
+                  { title: 'Drawing', desc: 'Explore structural proportions, portraits, and creative arts.' }
+                ].map((item) => (
                   <button
-                    key={style}
+                    key={item.title}
                     type="button"
-                    onClick={() => setFormData({...formData, artStyle: style})}
-                    className={`py-4 px-5 rounded-2xl border text-sm font-bold transition-all text-left ${
-                      formData.artStyle === style 
-                        ? 'border-[#FF8A00] bg-orange-50/50 text-[#FF8A00] shadow-md scale-[1.02]' 
+                    onClick={() => setFormData({...formData, artStyle: item.title})}
+                    className={`py-4 px-5 rounded-2xl border text-left transition-all flex items-center justify-between ${
+                      formData.artStyle === item.title
+                        ? 'border-[#FF8A00] bg-orange-50/50 text-[#FF8A00] shadow-md scale-[1.01]'
                         : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
-                    {style}
+                    <div>
+                      <div className="text-base font-black text-slate-900">{item.title}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">{item.desc}</div>
+                    </div>
                   </button>
                 ))}
               </div>
-              <button 
+              <button
                 type="button"
                 onClick={handleNext}
                 className="w-full py-4 bg-[#FF8A00] hover:bg-[#e07900] text-white font-extrabold rounded-2xl shadow-lg transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
@@ -206,8 +212,8 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={() => setFormData({...formData, skillLevel: level})}
                     className={`w-full py-4 px-5 rounded-2xl border text-sm font-bold transition-all text-left ${
-                      formData.skillLevel === level 
-                        ? 'border-[#FF8A00] bg-orange-50/50 text-[#FF8A00] shadow-md scale-[1.01]' 
+                      formData.skillLevel === level
+                        ? 'border-[#FF8A00] bg-orange-50/50 text-[#FF8A00] shadow-md scale-[1.01]'
                         : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
@@ -215,7 +221,7 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
-              <button 
+              <button
                 type="button"
                 onClick={handleNext}
                 className="w-full py-4 bg-[#FF8A00] hover:bg-[#e07900] text-white font-extrabold rounded-2xl shadow-lg transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
@@ -239,8 +245,8 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={() => setFormData({...formData, goal})}
                     className={`w-full py-4 px-5 rounded-2xl border text-sm font-bold transition-all text-left ${
-                      formData.goal === goal 
-                        ? 'border-[#FF8A00] bg-orange-50/50 text-[#FF8A00] shadow-md scale-[1.01]' 
+                      formData.goal === goal
+                        ? 'border-[#FF8A00] bg-orange-50/50 text-[#FF8A00] shadow-md scale-[1.01]'
                         : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
@@ -248,7 +254,7 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
-              <button 
+              <button
                 type="button"
                 onClick={handleNext}
                 className="w-full py-4 bg-[#FF8A00] hover:bg-[#e07900] text-white font-extrabold rounded-2xl shadow-lg transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
@@ -265,11 +271,11 @@ export default function OnboardingPage() {
               <h2 className="text-2xl font-black text-[#1E2A44] tracking-tight">
                 Save your account details
               </h2>
-              
+             
               <div>
                 <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">Username</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   autoComplete="username"
                   value={formData.username}
@@ -281,8 +287,8 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">Your Full Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   autoComplete="name"
                   value={formData.name}
@@ -294,8 +300,8 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">Working Email</label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   required
                   autoComplete="email"
                   value={formData.email}
@@ -307,8 +313,8 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="block text-xs font-black text-slate-500 uppercase tracking-wider mb-1.5">Password</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   required
                   autoComplete="new-password"
                   value={formData.password}
@@ -319,7 +325,7 @@ export default function OnboardingPage() {
               </div>
 
               <div className="pt-2">
-                <button 
+                <button
                   type="submit"
                   disabled={isLoading}
                   className="w-full py-4 bg-[#FF8A00] hover:bg-[#e07900] text-white font-extrabold rounded-2xl shadow-lg transition-all text-sm disabled:opacity-50 cursor-pointer"

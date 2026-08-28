@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pencil Pilot | AI Drawing Scan & Art Critique",
-  description: "Discover Pencil Pilot, a professional AI-driven drawing scan and art critique platform created by Harjass Digga.",
+  title: "DoodleFox | AI Sketch & Drawing Critique Platform",
+  description: "Upload your sketches and get instant AI feedback, line critiques, and leveling tools with DoodleFox.",
   verification: {
     google: "WhjTfub1GzTK-czyW1hlcB_kdpaEmzUUkJ2DzooEHXI",
   },

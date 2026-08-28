@@ -23,8 +23,6 @@ export default function DashboardPage() {
   });
 
   const [stats, setStats] = useState({
-    totalAnalyses: 0,
-    averageScore: 0,
     streak: 3,
     rank: 'Unranked',
     xp: 0
@@ -85,11 +83,15 @@ export default function DashboardPage() {
     try {
       setUserId(uid);
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', uid)
         .maybeSingle();
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+      }
 
       if (profile) {
         setUserProfile({
@@ -102,37 +104,43 @@ export default function DashboardPage() {
         });
       }
 
-      const { data: analysesData, error } = await supabase
+      const { data: analysesData, error: analysesError } = await supabase
         .from('analyses')
         .select('*')
         .eq('user_id', uid)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching analyses:", error);
+      if (analysesError) {
+        console.error("Error fetching analyses:", analysesError);
       }
 
       const userXp = profile ? (profile.xp || profile.total_xp || 0) : 0;
 
+      // Calculate Leaderboard Rank Dynamically
+      let calculatedRank = profile?.rank || 'Unranked';
+      
+      if (!profile?.rank) {
+        const { count, error: rankError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .gt('xp', userXp);
+
+        if (!rankError && count !== null) {
+          const rankPosition = count + 1;
+          calculatedRank = `#${rankPosition}`;
+        }
+      }
+
       if (analysesData && analysesData.length > 0) {
         setRecentAnalyses(analysesData);
-        const total = analysesData.length;
-        const totalScoreSum = analysesData.reduce((acc: number, curr: any) => acc + (Number(curr.score) || 0), 0);
-        const avg = Math.round(totalScoreSum / total);
-        let calculatedRank = 'Rookie';
-        if (total >= 10 && avg >= 75) calculatedRank = 'Pro Artist';
-        else if (total >= 5) calculatedRank = 'Intermediate';
-
-        setStats({
-          totalAnalyses: total,
-          averageScore: isNaN(avg) ? 0 : avg,
-          streak: profile?.streak || 3,
-          rank: calculatedRank,
-          xp: userXp
-        });
-      } else {
-        setStats(prev => ({ ...prev, xp: userXp }));
       }
+
+      setStats({
+        streak: profile?.streak || 3,
+        rank: calculatedRank,
+        xp: userXp
+      });
+
     } catch (err) {
       console.error("Error loading user data:", err);
     } finally {
@@ -180,7 +188,6 @@ export default function DashboardPage() {
       {/* SIDEBAR NAVIGATION (Desktop) */}
       <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col justify-between p-6 sticky top-0 h-screen select-none">
         <div className="space-y-8">
-          {/* TOP LOGO - Hlka left-aligned aur bada kiya gaya hai */}
           <div className="flex items-center -ml-2">
             <div className="w-36 h-14 relative flex items-center justify-start">
               <Image 
@@ -221,8 +228,7 @@ export default function DashboardPage() {
           </nav>
         </div>
 
-        {/* BOTTOM MASCOT SECTION - Onboarding page wala mascot image */}
-        <div className="h-[220px] w-full p-[20px] rounded-[20px] bg-gradient-to-b from-orange-50/60 to-white border border-orange-100 shadow-sm overflow-hidden flex flex-col items-center justify-center text-center">
+        <div className="h-[220px] w-full p-[20px] rounded-[20px] bg-gradient-to-b from-orange-50/65 to-white border border-orange-100 shadow-sm overflow-hidden flex flex-col items-center justify-center text-center">
           <div className="w-[120px] h-[70px] mb-[10px] relative flex items-center justify-center shrink-0">
             <Image 
               src="https://cdn.corenexis.com/f/tloOLJdZaNP.png" 
@@ -263,31 +269,7 @@ export default function DashboardPage() {
 
         {activeTab === 'dashboard' && (
           <div className="space-y-8">
-            <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
-                <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center font-bold">📋</div>
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900">{stats.totalAnalyses}</h3>
-                  <p className="text-xs font-semibold text-slate-700">Drawings Analyzed</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
-                <div className="w-10 h-10 bg-orange-50 text-[#FF8A00] rounded-xl flex items-center justify-center font-bold">⭐</div>
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900">{stats.averageScore} / 100</h3>
-                  <p className="text-xs font-semibold text-slate-700">Average Score</p>
-                </div>
-              </div>
-
-              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
-                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold">📈</div>
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900">{stats.rank}</h3>
-                  <p className="text-xs font-semibold text-slate-700">Current Rank</p>
-                </div>
-              </div>
-
+            <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                 <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center font-bold">
                   <Sparkles className="w-5 h-5" />
@@ -295,6 +277,26 @@ export default function DashboardPage() {
                 <div>
                   <h3 className="text-2xl font-black text-slate-900">{stats.xp} XP</h3>
                   <p className="text-xs font-semibold text-slate-700">Current XP</p>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold">
+                  <Trophy className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900">{stats.rank}</h3>
+                  <p className="text-xs font-semibold text-slate-700">Leaderboard Rank</p>
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                <div className="w-10 h-10 bg-orange-50 text-[#FF8A00] rounded-xl flex items-center justify-center font-bold">
+                  <Flame className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900">{stats.streak} Days</h3>
+                  <p className="text-xs font-semibold text-slate-700">Drawing Streak</p>
                 </div>
               </div>
             </section>
