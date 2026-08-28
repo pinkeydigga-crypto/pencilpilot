@@ -154,12 +154,13 @@ export default function LeaderboardPage() {
     return () => clearInterval(timer);
   }, [fetchLeaderboard]);
 
+  // FIX: Strictly find the logged-in user from leaderboard or userProfile. Do NOT fallback to leaderboard[0].
   const currentUserIndex = leaderboard.findIndex(u => u.id === userId);
-  const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : (userProfile || leaderboard[0] || null);
-  const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : (userProfile ? 'N/A' : 1);
+  const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : userProfile;
+  const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : (userProfile ? leaderboard.findIndex(u => u.id === userProfile.id) + 1 || 'N/A' : 'N/A');
 
   useEffect(() => {
-    if (!showShareModal || !currentUser || !canvasRef.current) return;
+    if (!showShareModal || !currentUser || !canvasRef.current || userRank === 'N/A') return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -314,7 +315,13 @@ export default function LeaderboardPage() {
 
           <div className="flex items-center gap-2">
             <button 
-              onClick={() => setShowShareModal(true)}
+              onClick={() => {
+                if (!currentUser) {
+                  alert("Please wait, loading your profile details...");
+                  return;
+                }
+                setShowShareModal(true);
+              }}
               className="bg-gradient-to-r from-[#FF8A00] to-[#e07900] hover:opacity-95 text-white px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-orange-500/20 hover:scale-[1.02] active:scale-[0.98]"
             >
               <Share2 className="w-4 h-4" /> Share Rank
@@ -471,7 +478,7 @@ export default function LeaderboardPage() {
       </div>
 
       {/* SHARE RANK CARD MODAL */}
-      {showShareModal && (
+      {showShareModal && currentUser && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full space-y-4 relative shadow-2xl border border-slate-200">
             <div className="flex justify-between items-center border-b pb-3 border-slate-100">

@@ -43,6 +43,7 @@ export default function EditProfilePage() {
         }
         setUserId(user.id);
 
+        // Fetch profile
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -51,11 +52,35 @@ export default function EditProfilePage() {
 
         if (data) {
           setFormData({
-            name: data.name || '',
+            name: data.name || user.user_metadata?.full_name || '',
             username: data.username || '',
             avatarUrl: data.avatar_seed || 'artist'
           });
+        } else {
+          // FIX: Agar naya user hai aur profile table mein row nahi hai, toh ek default row insert kar do
+          const defaultName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Artist Fox';
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              name: defaultName,
+              username: '',
+              avatar_seed: 'artist',
+              xp: 0,
+              streak: 0,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id' });
+
+          if (!insertError) {
+            setFormData({
+              name: defaultName,
+              username: '',
+              avatarUrl: 'artist'
+            });
+          }
         }
+      } else {
+        console.error("Error fetching profile:", err);
       } catch (err) {
         console.error("Error fetching profile:", err);
       } finally {
