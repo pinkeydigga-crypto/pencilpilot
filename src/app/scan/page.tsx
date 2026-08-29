@@ -144,13 +144,36 @@ export default function ScanPage() {
         throw new Error(errorMsg);
       }
 
-      // Lock immediately for 24 Hours
+      // Check if backend returned a non-drawing validation error message
+      const resData = jsonPayload?.result || jsonPayload || {};
+      const summaryText = resData.finalSummary || "";
+      const strengthsText = Array.isArray(resData.strengths) ? resData.strengths.join(" ") : "";
+      
+      if (
+        summaryText.toLowerCase().includes("only upload sketch") || 
+        strengthsText.toLowerCase().includes("only upload sketch") ||
+        (jsonPayload?.error && jsonPayload.error.toLowerCase().includes("only upload sketch"))
+      ) {
+        setAnalysisResult({
+          artworkType: "Invalid Upload",
+          skillLevel: difficulty,
+          score: 0,
+          tier: "Rejected",
+          strengths: ["Only upload sketch and drawing not other images"],
+          improvements: ["Please upload a legitimate sketch, drawing, or doodle artwork."],
+          specificImprovements: ["Ensure the file content matches hand-drawn art."],
+          practiceExercise: "Upload a valid sketch to continue.",
+          finalSummary: "Only upload sketch and drawing not other images"
+        });
+        setIsAnalyzing(false);
+        return;
+      }
+
+      // Lock immediately for 24 Hours on success
       const lockExpiry = new Date().getTime() + 24 * 60 * 60 * 1000;
       localStorage.setItem(LOCK_TIME_KEY, String(lockExpiry));
       setIsLocked(true);
       startCountdown(lockExpiry, LOCK_TIME_KEY);
-
-      const resData = jsonPayload?.result || jsonPayload || {};
 
       setAnalysisResult({
         artworkType: resData.artworkType || "Graphite Sketch",
@@ -165,22 +188,38 @@ export default function ScanPage() {
       });
     } catch (err: any) {
       console.error("Scan error:", err);
-      const lockExpiry = new Date().getTime() + 24 * 60 * 60 * 1000;
-      localStorage.setItem(LOCK_TIME_KEY, String(lockExpiry));
-      setIsLocked(true);
-      startCountdown(lockExpiry, LOCK_TIME_KEY);
+      
+      const errorMessage = err?.message || "";
+      if (errorMessage.toLowerCase().includes("only upload sketch")) {
+        setAnalysisResult({
+          artworkType: "Invalid Upload",
+          skillLevel: difficulty,
+          score: 0,
+          tier: "Rejected",
+          strengths: ["Only upload sketch and drawing not other images"],
+          improvements: ["Please upload a legitimate sketch, drawing, or doodle artwork."],
+          specificImprovements: ["Ensure the file content matches hand-drawn art."],
+          practiceExercise: "Upload a valid sketch to continue.",
+          finalSummary: "Only upload sketch and drawing not other images"
+        });
+      } else {
+        const lockExpiry = new Date().getTime() + 24 * 60 * 60 * 1000;
+        localStorage.setItem(LOCK_TIME_KEY, String(lockExpiry));
+        setIsLocked(true);
+        startCountdown(lockExpiry, LOCK_TIME_KEY);
 
-      setAnalysisResult({
-        artworkType: "Visual Asset",
-        skillLevel: difficulty,
-        score: 80,
-        tier: "Standard",
-        strengths: ["Asset successfully received"],
-        improvements: [err?.message && err.message !== "{}" ? err.message : "AI engine response processed"],
-        specificImprovements: ["Verify structural lighting"],
-        practiceExercise: "Review foundational shapes.",
-        finalSummary: "Scan registered and evaluated under safety guidelines."
-      });
+        setAnalysisResult({
+          artworkType: "Visual Asset",
+          skillLevel: difficulty,
+          score: 80,
+          tier: "Standard",
+          strengths: ["Asset successfully received"],
+          improvements: [errorMessage && errorMessage !== "{}" ? errorMessage : "AI engine response processed"],
+          specificImprovements: ["Verify structural lighting"],
+          practiceExercise: "Review foundational shapes.",
+          finalSummary: "Scan registered and evaluated under safety guidelines."
+        });
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -374,7 +413,7 @@ export default function ScanPage() {
                     <h4 className="font-bold text-rose-800 uppercase tracking-wider text-[11px]">Areas for Improvement</h4>
                     <ul className="space-y-1 text-slate-700">
                       {analysisResult.improvements?.map((item: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-1.5">
+                        <li key={idx} className="files-start flex items-start gap-1.5">
                           <span className="text-rose-500 font-bold">!</span> {item}
                         </li>
                       ))}
