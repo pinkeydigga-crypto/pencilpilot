@@ -155,9 +155,9 @@ export default function LeaderboardPage() {
 
   const currentUserIndex = leaderboard.findIndex(u => u.id === userId);
   const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : userProfile;
-  const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : (userProfile ? leaderboard.findIndex(u => u.id === userProfile.id) + 1 || 'N/A' : 'N/A');
+  const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : (userProfile ? leaderboard.findIndex(u => u.id === userProfile.id) + 1 || '1' : '1');
 
-  // Fixed Share Click Handler with direct profile fetching fallback
+  // Seamless Share Click Handler without any alert block
   const handleOpenShare = async () => {
     let targetUser = currentUser;
     if (!targetUser && supabase && userId) {
@@ -171,16 +171,11 @@ export default function LeaderboardPage() {
         targetUser = profile;
       }
     }
-
-    if (targetUser) {
-      setShowShareModal(true);
-    } else {
-      alert("Please wait a moment while your profile loads.");
-    }
+    setShowShareModal(true);
   };
 
   useEffect(() => {
-    if (!showShareModal || !currentUser || !canvasRef.current) return;
+    if (!showShareModal || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -196,7 +191,7 @@ export default function LeaderboardPage() {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 1080, 1080);
 
-    // Decorative Dots
+    // Decorative Dots Pattern
     ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
     for (let x = 40; x < 1080; x += 60) {
       for (let y = 40; y < 1080; y += 60) {
@@ -206,77 +201,81 @@ export default function LeaderboardPage() {
       }
     }
 
+    const activeUser = currentUser || userProfile || { name: 'DoodleFox Artist', xp: 0, streak: 0, avatar_seed: 'artist' };
+    const activeRank = userRank || '1';
+
     const drawCanvasContent = (imgObj: HTMLImageElement | null, avatarImgObj: HTMLImageElement | null) => {
+      // Draw Logo or Brand Header text cleanly on left side
       if (imgObj) {
         try {
-          ctx.drawImage(imgObj, 120, 90, 280, 85);
+          ctx.drawImage(imgObj, 80, 80, 320, 95);
         } catch (e) {
           ctx.fillStyle = '#FFFFFF';
-          ctx.font = '900 48px sans-serif';
-          ctx.fillText('DoodleFox', 120, 150);
+          ctx.font = '900 52px sans-serif';
+          ctx.fillText('DoodleFox', 80, 140);
         }
       } else {
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '900 48px sans-serif';
-        ctx.fillText('DoodleFox', 120, 150);
+        ctx.font = '900 52px sans-serif';
+        ctx.fillText('DoodleFox', 80, 140);
       }
 
-      // Tagline
+      // Tagline cleanly positioned on left without overlapping
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = '900 56px sans-serif';
-      wrapText(ctx, `Featured on DoodleFox leaderboard with #${userRank} rank!`, 120, 340, 380, 72);
+      ctx.font = '900 48px sans-serif';
+      wrapText(ctx, `Featured on DoodleFox leaderboard with #${activeRank} rank!`, 80, 280, 420, 64);
 
-      // White Card Container
-      const cardX = 540;
-      const cardY = 160;
-      const cardW = 460;
-      const cardH = 760;
+      // White Card Container on the right side
+      const cardX = 550;
+      const cardY = 100;
+      const cardW = 470;
+      const cardH = 880;
       const radius = 40;
 
       ctx.save();
       ctx.beginPath();
       drawRoundRect(ctx, cardX, cardY, cardW, cardH, radius);
       ctx.fillStyle = '#FFFFFF';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-      ctx.shadowBlur = 40;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+      ctx.shadowBlur = 35;
       ctx.fill();
       ctx.restore();
 
       // Rank Badge Box inside card
       ctx.fillStyle = '#1E2A44';
       ctx.beginPath();
-      drawRoundRect(ctx, cardX + 40, cardY + 40, 380, 64, 18);
+      drawRoundRect(ctx, cardX + 40, cardY + 45, 390, 70, 20);
       ctx.fill();
 
       ctx.fillStyle = '#FF8A00';
-      ctx.font = '800 28px sans-serif';
+      ctx.font = '800 30px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`GLOBAL RANK #${userRank}`, cardX + 230, cardY + 82);
+      ctx.fillText(`GLOBAL RANK #${activeRank}`, cardX + 235, cardY + 90);
 
       // User Name
       ctx.fillStyle = '#1E2A44';
-      ctx.font = '800 38px sans-serif';
-      ctx.fillText(currentUser.name || 'DoodleFox Artist', cardX + 230, cardY + 295);
+      ctx.font = '800 40px sans-serif';
+      ctx.fillText(activeUser.name || 'DoodleFox Artist', cardX + 235, cardY + 340);
 
       // XP Badge Box
       ctx.fillStyle = '#FFF5EB';
       ctx.beginPath();
-      drawRoundRect(ctx, cardX + 70, cardY + 330, 320, 80, 24);
+      drawRoundRect(ctx, cardX + 60, cardY + 380, 350, 90, 24);
       ctx.fill();
 
       ctx.fillStyle = '#FF8A00';
-      ctx.font = '900 40px sans-serif';
-      ctx.fillText(`${currentUser.xp || 0} XP`, cardX + 230, cardY + 384);
+      ctx.font = '900 44px sans-serif';
+      ctx.fillText(`${activeUser.xp || 0} XP`, cardX + 235, cardY + 440);
 
       // Streak
       ctx.fillStyle = '#64748B';
-      ctx.font = '700 22px sans-serif';
-      ctx.fillText(`🔥 ${currentUser.streak || 0} Day Streak`, cardX + 230, cardY + 460);
+      ctx.font = '700 24px sans-serif';
+      ctx.fillText(`🔥 ${activeUser.streak || 0} Day Streak`, cardX + 235, cardY + 530);
 
-      // Avatar Drawing with fallback circle
-      const avatarX = cardX + 230;
-      const avatarY = cardY + 185;
-      const avatarRadius = 55;
+      // Avatar Drawing inside card
+      const avatarX = cardX + 235;
+      const avatarY = cardY + 215;
+      const avatarRadius = 65;
 
       ctx.save();
       ctx.beginPath();
@@ -299,12 +298,11 @@ export default function LeaderboardPage() {
 
       ctx.beginPath();
       ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 6;
       ctx.strokeStyle = '#FF8A00';
       ctx.stroke();
     };
 
-    // Safe Image Loaders with Fallback Timers to prevent freezing
     let headerImgLoaded = false;
     let avatarImgLoaded = false;
     let headerImgObj: HTMLImageElement | null = null;
@@ -338,9 +336,8 @@ export default function LeaderboardPage() {
       avatarImgLoaded = true;
       checkAndDraw();
     };
-    avatarImg.src = getCartoonAvatar(currentUser.avatar_seed || 'artist');
+    avatarImg.src = getCartoonAvatar(activeUser.avatar_seed || 'artist');
 
-    // Fallback safeguard in case network hangs
     const safetyTimer = setTimeout(() => {
       if (!headerImgLoaded || !avatarImgLoaded) {
         checkAndDraw();
@@ -349,7 +346,7 @@ export default function LeaderboardPage() {
 
     return () => clearTimeout(safetyTimer);
 
-  }, [showShareModal, currentUser, userRank]);
+  }, [showShareModal, currentUser, userProfile, userRank]);
 
   const handleDownloadCard = () => {
     if (!canvasRef.current) return;
@@ -541,7 +538,7 @@ export default function LeaderboardPage() {
       </div>
 
       {/* SHARE RANK CARD MODAL */}
-      {showShareModal && currentUser && (
+      {showShareModal && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full space-y-4 relative shadow-2xl border border-slate-200">
             <div className="flex justify-between items-center border-b pb-3 border-slate-100">
