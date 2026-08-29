@@ -86,7 +86,17 @@ export default function LeaderboardPage() {
           .select('id, name, xp, streak, completed_challenges, avatar_seed')
           .eq('id', user.id)
           .maybeSingle();
-        if (profile) setUserProfile(profile);
+        if (profile) {
+          setUserProfile(profile);
+        } else {
+          setUserProfile({
+            id: user.id,
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'DoodleFox Artist',
+            xp: 0,
+            streak: 0,
+            avatar_seed: 'artist'
+          });
+        }
       }
     }
     fetchUser();
@@ -157,10 +167,9 @@ export default function LeaderboardPage() {
   const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : userProfile;
   const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : (userProfile ? leaderboard.findIndex(u => u.id === userProfile.id) + 1 || '1' : '1');
 
-  // Seamless Share Click Handler without any alert block
   const handleOpenShare = async () => {
     let targetUser = currentUser;
-    if (!targetUser && supabase && userId) {
+    if ((!targetUser || !targetUser.name) && supabase && userId) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('id, name, xp, streak, completed_challenges, avatar_seed')
@@ -208,74 +217,54 @@ export default function LeaderboardPage() {
       // Draw Logo or Brand Header text cleanly on left side
       if (imgObj) {
         try {
-          ctx.drawImage(imgObj, 80, 80, 320, 95);
+          ctx.drawImage(imgObj, 80, 80, 280, 85);
         } catch (e) {
           ctx.fillStyle = '#FFFFFF';
-          ctx.font = '900 52px sans-serif';
+          ctx.font = '900 48px sans-serif';
           ctx.fillText('DoodleFox', 80, 140);
         }
       } else {
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '900 52px sans-serif';
+        ctx.font = '900 48px sans-serif';
         ctx.fillText('DoodleFox', 80, 140);
       }
 
-      // Tagline cleanly positioned on left without overlapping
+      // Tagline cleanly positioned on left without overlapping (increased start Y to 260)
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = '900 48px sans-serif';
-      wrapText(ctx, `Featured on DoodleFox leaderboard with #${activeRank} rank!`, 80, 280, 420, 64);
+      ctx.font = '900 44px sans-serif';
+      wrapText(ctx, `Featured on DoodleFox leaderboard with #${activeRank} rank!`, 80, 250, 420, 60);
 
       // White Card Container on the right side
-      const cardX = 550;
-      const cardY = 100;
-      const cardW = 470;
-      const cardH = 880;
-      const radius = 40;
+      const cardX = 540;
+      const cardY = 80;
+      const cardW = 480;
+      const cardH = 920;
+      const radius = 36;
 
       ctx.save();
       ctx.beginPath();
       drawRoundRect(ctx, cardX, cardY, cardW, cardH, radius);
       ctx.fillStyle = '#FFFFFF';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
-      ctx.shadowBlur = 35;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+      ctx.shadowBlur = 30;
       ctx.fill();
       ctx.restore();
 
       // Rank Badge Box inside card
       ctx.fillStyle = '#1E2A44';
       ctx.beginPath();
-      drawRoundRect(ctx, cardX + 40, cardY + 45, 390, 70, 20);
+      drawRoundRect(ctx, cardX + 40, cardY + 40, 400, 64, 18);
       ctx.fill();
 
       ctx.fillStyle = '#FF8A00';
-      ctx.font = '800 30px sans-serif';
+      ctx.font = '800 28px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`GLOBAL RANK #${activeRank}`, cardX + 235, cardY + 90);
-
-      // User Name
-      ctx.fillStyle = '#1E2A44';
-      ctx.font = '800 40px sans-serif';
-      ctx.fillText(activeUser.name || 'DoodleFox Artist', cardX + 235, cardY + 340);
-
-      // XP Badge Box
-      ctx.fillStyle = '#FFF5EB';
-      ctx.beginPath();
-      drawRoundRect(ctx, cardX + 60, cardY + 380, 350, 90, 24);
-      ctx.fill();
-
-      ctx.fillStyle = '#FF8A00';
-      ctx.font = '900 44px sans-serif';
-      ctx.fillText(`${activeUser.xp || 0} XP`, cardX + 235, cardY + 440);
-
-      // Streak
-      ctx.fillStyle = '#64748B';
-      ctx.font = '700 24px sans-serif';
-      ctx.fillText(`🔥 ${activeUser.streak || 0} Day Streak`, cardX + 235, cardY + 530);
+      ctx.fillText(`GLOBAL RANK #${activeRank}`, cardX + 240, cardY + 81);
 
       // Avatar Drawing inside card
-      const avatarX = cardX + 235;
-      const avatarY = cardY + 215;
-      const avatarRadius = 65;
+      const avatarX = cardX + 240;
+      const avatarY = cardY + 220;
+      const avatarRadius = 60;
 
       ctx.save();
       ctx.beginPath();
@@ -298,9 +287,32 @@ export default function LeaderboardPage() {
 
       ctx.beginPath();
       ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-      ctx.lineWidth = 6;
+      ctx.lineWidth = 5;
       ctx.strokeStyle = '#FF8A00';
       ctx.stroke();
+
+      // User Name (Properly separated below avatar)
+      ctx.fillStyle = '#1E2A44';
+      ctx.font = '800 36px sans-serif';
+      const displayName = activeUser.name || 'DoodleFox Artist';
+      // Truncate name if too long for canvas
+      const truncatedName = displayName.length > 18 ? displayName.substring(0, 16) + '...' : displayName;
+      ctx.fillText(truncatedName, cardX + 240, cardY + 335);
+
+      // XP Badge Box
+      ctx.fillStyle = '#FFF5EB';
+      ctx.beginPath();
+      drawRoundRect(ctx, cardX + 50, cardY + 380, 380, 85, 20);
+      ctx.fill();
+
+      ctx.fillStyle = '#FF8A00';
+      ctx.font = '900 40px sans-serif';
+      ctx.fillText(`${activeUser.xp || 0} XP`, cardX + 240, cardY + 435);
+
+      // Streak
+      ctx.fillStyle = '#64748B';
+      ctx.font = '700 24px sans-serif';
+      ctx.fillText(`🔥 ${activeUser.streak || 0} Day Streak`, cardX + 240, cardY + 520);
     };
 
     let headerImgLoaded = false;
@@ -439,7 +451,12 @@ export default function LeaderboardPage() {
                       <span className="absolute -top-4 -right-1 text-sm sm:text-base">🥈</span>
                     </div>
                     <div className="w-full">
-                      <h4 className="font-bold text-xs text-slate-800 truncate">{leaderboard[1]?.name || 'User'}</h4>
+                      <h4 className="font-bold text-xs text-slate-800 truncate flex items-center justify-center gap-1">
+                        <span className="truncate">{leaderboard[1]?.name || 'User'}</span>
+                      </h4>
+                      {leaderboard[1].id === userId && (
+                        <span className="bg-[#FF8A00] text-white text-[8px] font-extrabold px-1.5 py-0.2 rounded-full uppercase inline-block mt-0.5">YOU</span>
+                      )}
                       <p className="text-[10px] text-slate-500 font-medium">Lvl {Math.floor((leaderboard[1]?.xp || 0) / 100) + 1}</p>
                     </div>
                     <div className="bg-slate-100 border border-slate-200 rounded-xl py-1.5 px-2 w-full shadow-inner">
@@ -456,7 +473,12 @@ export default function LeaderboardPage() {
                       <img src={getCartoonAvatar(leaderboard[0].avatar_seed || 'artist')} alt="avatar" className="w-16 h-16 sm:w-18 sm:h-18 rounded-3xl border-2 border-[#FF8A00] shadow-md bg-orange-100 object-cover p-0.5" />
                     </div>
                     <div className="w-full">
-                      <h4 className="font-extrabold text-xs sm:text-sm text-[#1E2A44] truncate">{leaderboard[0]?.name || 'User'}</h4>
+                      <h4 className="font-extrabold text-xs sm:text-sm text-[#1E2A44] truncate">
+                        <span className="truncate">{leaderboard[0]?.name || 'User'}</span>
+                      </h4>
+                      {leaderboard[0].id === userId && (
+                        <span className="bg-[#FF8A00] text-white text-[8px] font-extrabold px-1.5 py-0.2 rounded-full uppercase inline-block mt-0.5">YOU</span>
+                      )}
                       <p className="text-[10px] text-[#FF8A00] font-bold">Lvl {Math.floor((leaderboard[0]?.xp || 0) / 100) + 1}</p>
                     </div>
                     <div className="bg-orange-100/70 border border-orange-200 rounded-xl py-2 px-3 w-full shadow-inner">
@@ -473,7 +495,12 @@ export default function LeaderboardPage() {
                       <span className="absolute -top-4 -right-1 text-sm sm:text-base">🥉</span>
                     </div>
                     <div className="w-full">
-                      <h4 className="font-bold text-xs text-slate-800 truncate">{leaderboard[2]?.name || 'User'}</h4>
+                      <h4 className="font-bold text-xs text-slate-800 truncate">
+                        <span className="truncate">{leaderboard[2]?.name || 'User'}</span>
+                      </h4>
+                      {leaderboard[2].id === userId && (
+                        <span className="bg-[#FF8A00] text-white text-[8px] font-extrabold px-1.5 py-0.2 rounded-full uppercase inline-block mt-0.5">YOU</span>
+                      )}
                       <p className="text-[10px] text-slate-500 font-medium">Lvl {Math.floor((leaderboard[2]?.xp || 0) / 100) + 1}</p>
                     </div>
                     <div className="bg-slate-100 border border-slate-200 rounded-xl py-1.5 px-2 w-full shadow-inner">
@@ -511,7 +538,7 @@ export default function LeaderboardPage() {
                             <h4 className="font-bold text-xs sm:text-sm text-[#1E2A44] flex items-center gap-2 truncate">
                               <span className="truncate">{user.name || `Artist #${rankNum}`}</span>
                               {isCurrentUser && (
-                                <span className="bg-[#FF8A00] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase flex-shrink-0">You</span>
+                                <span className="bg-[#FF8A00] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase flex-shrink-0 animate-pulse">YOU</span>
                               )}
                             </h4>
                             <p className="text-[10px] text-slate-500 flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap">
