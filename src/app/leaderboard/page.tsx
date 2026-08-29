@@ -154,13 +154,27 @@ export default function LeaderboardPage() {
     return () => clearInterval(timer);
   }, [fetchLeaderboard]);
 
-  // FIX: Strictly find the logged-in user from leaderboard or userProfile. Do NOT fallback to leaderboard[0].
   const currentUserIndex = leaderboard.findIndex(u => u.id === userId);
   const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : userProfile;
   const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : (userProfile ? leaderboard.findIndex(u => u.id === userProfile.id) + 1 || 'N/A' : 'N/A');
 
+  // Instant Share Click Handler
+  const handleOpenShare = async () => {
+    if (!currentUser && supabase && userId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, name, xp, streak, completed_challenges, avatar_seed')
+        .eq('id', userId)
+        .maybeSingle();
+      if (profile) {
+        setUserProfile(profile);
+      }
+    }
+    setShowShareModal(true);
+  };
+
   useEffect(() => {
-    if (!showShareModal || !currentUser || !canvasRef.current || userRank === 'N/A') return;
+    if (!showShareModal || !currentUser || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -291,45 +305,41 @@ export default function LeaderboardPage() {
       const link = document.createElement('a');
       link.download = `doodlefox-rank-${userRank || 'status'}.png`;
       link.href = dataUrl;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     } catch (err) {
       alert("Download blocked by browser security restrictions. Try taking a screenshot instead!");
     }
   };
 
   return (
-    <div className="min-h-screen font-sans bg-[#F1F3F6] text-slate-900 p-6 md:p-10 flex flex-col items-center">
-      <div className="max-w-3xl w-full space-y-8">
+    <div className="min-h-screen font-sans bg-[#F1F3F6] text-slate-900 p-4 sm:p-6 md:p-10 flex flex-col items-center overflow-x-hidden">
+      <div className="max-w-3xl w-full mx-auto space-y-6">
         
         {/* Top Navbar */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-50 text-[#FF8A00] rounded-xl flex items-center justify-center font-bold border border-orange-100 shadow-sm">
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <div className="w-10 h-10 bg-orange-50 text-[#FF8A00] rounded-xl flex items-center justify-center font-bold border border-orange-100 shadow-sm flex-shrink-0">
               <Trophy className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-[#1E2A44]">DoodleFox Leaderboard</h2>
-              <p className="text-[11px] text-slate-500">Global rankings based on XP and completed sketches.</p>
+              <p className="text-[11px] text-slate-500">Global rankings based on XP and sketches.</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button 
-              onClick={() => {
-                if (!currentUser) {
-                  alert("Please wait, loading your profile details...");
-                  return;
-                }
-                setShowShareModal(true);
-              }}
-              className="bg-gradient-to-r from-[#FF8A00] to-[#e07900] hover:opacity-95 text-white px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-orange-500/20 hover:scale-[1.02] active:scale-[0.98]"
+              onClick={handleOpenShare}
+              className="bg-gradient-to-r from-[#FF8A00] to-[#e07900] hover:opacity-95 text-white px-4 py-2 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-orange-500/20"
             >
               <Share2 className="w-4 h-4" /> Share Rank
             </button>
 
             <button 
               onClick={() => router.push('/dashboard')}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs transition flex items-center gap-2 cursor-pointer"
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" /> Dashboard
             </button>
@@ -367,20 +377,20 @@ export default function LeaderboardPage() {
             <p className="text-xs text-slate-500">Complete challenges to secure the #1 rank!</p>
           </div>
         ) : (
-          <div className="bg-white text-slate-900 p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200 space-y-6 overflow-hidden">
+          <div className="bg-white text-slate-900 p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200 space-y-6">
             
             {/* TOP 3 PODIUM SECTION */}
             {leaderboard.length >= 1 && (
-              <div className="flex justify-center items-end gap-3 sm:gap-4 pt-6 pb-6 px-2 sm:px-4 bg-gradient-to-b from-orange-50/30 to-white rounded-2xl border border-orange-100/60">
+              <div className="flex justify-center items-end gap-2 sm:gap-4 pt-6 pb-6 px-2 bg-gradient-to-b from-orange-50/30 to-white rounded-2xl border border-orange-100/60 overflow-x-auto">
                 {leaderboard[1] && (
-                  <div className={`flex flex-col items-center space-y-2 w-28 text-center p-3 rounded-2xl border ${leaderboard[1].id === userId ? 'border-[#FF8A00] bg-orange-50/50 ring-2 ring-orange-400' : 'border-slate-200 bg-white'}`}>
+                  <div className={`flex flex-col items-center space-y-2 w-24 sm:w-28 text-center p-3 rounded-2xl border flex-shrink-0 ${leaderboard[1].id === userId ? 'border-[#FF8A00] bg-orange-50/50 ring-2 ring-orange-400' : 'border-slate-200 bg-white'}`}>
                     <div className="relative">
-                      <img src={getCartoonAvatar(leaderboard[1].avatar_seed || 'artist')} alt="avatar" className="w-14 h-14 rounded-2xl border-2 border-slate-300 shadow-sm bg-slate-100 object-cover p-0.5" />
-                      <span className="absolute -top-4 -right-1 text-base">🥈</span>
+                      <img src={getCartoonAvatar(leaderboard[1].avatar_seed || 'artist')} alt="avatar" className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border-2 border-slate-300 shadow-sm bg-slate-100 object-cover p-0.5" />
+                      <span className="absolute -top-4 -right-1 text-sm sm:text-base">🥈</span>
                     </div>
                     <div className="w-full">
                       <h4 className="font-bold text-xs text-slate-800 truncate">{leaderboard[1]?.name || 'User'}</h4>
-                      <p className="text-[10px] text-slate-500 font-medium">Level {Math.floor((leaderboard[1]?.xp || 0) / 100) + 1}</p>
+                      <p className="text-[10px] text-slate-500 font-medium">Lvl {Math.floor((leaderboard[1]?.xp || 0) / 100) + 1}</p>
                     </div>
                     <div className="bg-slate-100 border border-slate-200 rounded-xl py-1.5 px-2 w-full shadow-inner">
                       <span className="text-slate-700 font-black text-xs block">{leaderboard[1]?.xp || 0}</span>
@@ -390,31 +400,31 @@ export default function LeaderboardPage() {
                 )}
 
                 {leaderboard[0] && (
-                  <div className={`flex flex-col items-center space-y-2 w-32 text-center p-3 rounded-2xl border-2 ${leaderboard[0].id === userId ? 'border-[#FF8A00] bg-orange-50/50 ring-4 ring-orange-400' : 'border-[#FF8A00] bg-orange-50/30'} shadow-md`}>
+                  <div className={`flex flex-col items-center space-y-2 w-28 sm:w-32 text-center p-3 rounded-2xl border-2 flex-shrink-0 ${leaderboard[0].id === userId ? 'border-[#FF8A00] bg-orange-50/50 ring-4 ring-orange-400' : 'border-[#FF8A00] bg-orange-50/30'} shadow-md`}>
                     <div className="relative pt-2">
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-2xl">🥇</div>
-                      <img src={getCartoonAvatar(leaderboard[0].avatar_seed || 'artist')} alt="avatar" className="w-18 h-18 rounded-3xl border-2 border-[#FF8A00] shadow-md bg-orange-100 object-cover p-0.5" />
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-xl sm:text-2xl">🥇</span>
+                      <img src={getCartoonAvatar(leaderboard[0].avatar_seed || 'artist')} alt="avatar" className="w-16 h-16 sm:w-18 sm:h-18 rounded-3xl border-2 border-[#FF8A00] shadow-md bg-orange-100 object-cover p-0.5" />
                     </div>
                     <div className="w-full">
-                      <h4 className="font-extrabold text-sm text-[#1E2A44] truncate">{leaderboard[0]?.name || 'User'}</h4>
-                      <p className="text-[10px] text-[#FF8A00] font-bold">Level {Math.floor((leaderboard[0]?.xp || 0) / 100) + 1}</p>
+                      <h4 className="font-extrabold text-xs sm:text-sm text-[#1E2A44] truncate">{leaderboard[0]?.name || 'User'}</h4>
+                      <p className="text-[10px] text-[#FF8A00] font-bold">Lvl {Math.floor((leaderboard[0]?.xp || 0) / 100) + 1}</p>
                     </div>
                     <div className="bg-orange-100/70 border border-orange-200 rounded-xl py-2 px-3 w-full shadow-inner">
-                      <span className="text-orange-900 font-black text-sm block">{leaderboard[0]?.xp || 0}</span>
+                      <span className="text-orange-900 font-black text-xs sm:text-sm block">{leaderboard[0]?.xp || 0}</span>
                       <span className="text-[9px] text-[#FF8A00] font-bold uppercase tracking-wider">pts</span>
                     </div>
                   </div>
                 )}
 
                 {leaderboard[2] && (
-                  <div className={`flex flex-col items-center space-y-2 w-28 text-center p-3 rounded-2xl border ${leaderboard[2].id === userId ? 'border-[#FF8A00] bg-orange-50/50 ring-2 ring-orange-400' : 'border-amber-700/30 bg-white'}`}>
+                  <div className={`flex flex-col items-center space-y-2 w-24 sm:w-28 text-center p-3 rounded-2xl border flex-shrink-0 ${leaderboard[2].id === userId ? 'border-[#FF8A00] bg-orange-50/50 ring-2 ring-orange-400' : 'border-amber-700/30 bg-white'}`}>
                     <div className="relative">
-                      <img src={getCartoonAvatar(leaderboard[2].avatar_seed || 'artist')} alt="avatar" className="w-14 h-14 rounded-2xl border-2 border-amber-600/60 shadow-sm bg-amber-50 object-cover p-0.5" />
-                      <span className="absolute -top-4 -right-1 text-base">🥉</span>
+                      <img src={getCartoonAvatar(leaderboard[2].avatar_seed || 'artist')} alt="avatar" className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border-2 border-amber-600/60 shadow-sm bg-amber-50 object-cover p-0.5" />
+                      <span className="absolute -top-4 -right-1 text-sm sm:text-base">🥉</span>
                     </div>
                     <div className="w-full">
                       <h4 className="font-bold text-xs text-slate-800 truncate">{leaderboard[2]?.name || 'User'}</h4>
-                      <p className="text-[10px] text-slate-500 font-medium">Level {Math.floor((leaderboard[2]?.xp || 0) / 100) + 1}</p>
+                      <p className="text-[10px] text-slate-500 font-medium">Lvl {Math.floor((leaderboard[2]?.xp || 0) / 100) + 1}</p>
                     </div>
                     <div className="bg-slate-100 border border-slate-200 rounded-xl py-1.5 px-2 w-full shadow-inner">
                       <span className="text-amber-800 font-black text-xs block">{leaderboard[2]?.xp || 0}</span>
@@ -438,33 +448,33 @@ export default function LeaderboardPage() {
                     return (
                       <div 
                         key={user.id || idx} 
-                        className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${
+                        className={`p-3.5 sm:p-4 rounded-2xl border flex items-center justify-between transition-all ${
                           isCurrentUser 
                             ? 'bg-orange-50/60 border-2 border-[#FF8A00] shadow-sm' 
                             : 'bg-slate-50 border border-slate-200 hover:bg-slate-100/80'
                         }`}
                       >
-                        <div className="flex items-center gap-4">
-                          <span className="font-black text-[#FF8A00] text-sm w-6">#{rankNum}</span>
+                        <div className="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                          <span className="font-black text-[#FF8A00] text-xs sm:text-sm w-6 flex-shrink-0">#{rankNum}</span>
                           <img src={getCartoonAvatar(user.avatar_seed || 'artist')} alt="avatar" className="w-10 h-10 rounded-xl bg-orange-100 object-cover border border-slate-200 shadow-sm flex-shrink-0 p-0.5" />
-                          <div>
-                            <h4 className="font-bold text-sm text-[#1E2A44] flex items-center gap-2">
-                              {user.name || `Artist #${rankNum}`}
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-xs sm:text-sm text-[#1E2A44] flex items-center gap-2 truncate">
+                              <span className="truncate">{user.name || `Artist #${rankNum}`}</span>
                               {isCurrentUser && (
-                                <span className="bg-[#FF8A00] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase">You</span>
+                                <span className="bg-[#FF8A00] text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase flex-shrink-0">You</span>
                               )}
                             </h4>
-                            <p className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
-                              <span className="flex items-center gap-0.5"><Flame className="w-3 h-3 text-orange-500" /> {user.streak || 0}d streak</span>
+                            <p className="text-[10px] text-slate-500 flex items-center gap-1.5 sm:gap-2 mt-0.5 flex-wrap">
+                              <span className="flex items-center gap-0.5"><Flame className="w-3 h-3 text-orange-500" /> {user.streak || 0}d</span>
                               <span>•</span>
                               <span className="flex items-center gap-0.5"><CheckCircle className="w-3 h-3 text-[#FF8A00]" /> {user.completed_challenges?.length || 0} sketches</span>
                             </p>
                           </div>
                         </div>
 
-                        <div className="text-right">
-                          <span className="text-sm font-black text-slate-900 block">{user.xp || 0}</span>
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">pts</span>
+                        <div className="text-right flex-shrink-0 pl-2">
+                          <span className="text-xs sm:text-sm font-black text-slate-900 block">{user.xp || 0}</span>
+                          <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider">pts</span>
                         </div>
                       </div>
                     );
@@ -496,7 +506,7 @@ export default function LeaderboardPage() {
 
             {/* Canvas Card Preview */}
             <div className="flex justify-center bg-slate-100 rounded-2xl p-2 border border-slate-200 overflow-hidden">
-              <canvas ref={canvasRef} className="w-full max-w-[360px] h-auto rounded-xl shadow-md" />
+              <canvas ref={canvasRef} className="w-full max-w-[320px] sm:max-w-[360px] h-auto rounded-xl shadow-md" />
             </div>
 
             <div className="space-y-2">
