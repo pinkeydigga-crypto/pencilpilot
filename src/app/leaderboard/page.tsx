@@ -31,7 +31,6 @@ const getCartoonAvatar = (seed: string) => {
   return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(safeSeed)}&backgroundColor=ffe5cc,ffdfbf,ffd5dc,d1d4f9`;
 };
 
-// Canvas roundRect Polyfill Helper
 const drawRoundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
   if (typeof ctx.roundRect === 'function') {
     ctx.roundRect(x, y, w, h, r);
@@ -158,9 +157,10 @@ export default function LeaderboardPage() {
   const currentUser = currentUserIndex !== -1 ? leaderboard[currentUserIndex] : userProfile;
   const userRank = currentUserIndex !== -1 ? currentUserIndex + 1 : (userProfile ? leaderboard.findIndex(u => u.id === userProfile.id) + 1 || 'N/A' : 'N/A');
 
-  // Instant Share Click Handler
+  // Fixed Share Click Handler with direct profile fetching fallback
   const handleOpenShare = async () => {
-    if (!currentUser && supabase && userId) {
+    let targetUser = currentUser;
+    if (!targetUser && supabase && userId) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('id, name, xp, streak, completed_challenges, avatar_seed')
@@ -168,9 +168,15 @@ export default function LeaderboardPage() {
         .maybeSingle();
       if (profile) {
         setUserProfile(profile);
+        targetUser = profile;
       }
     }
-    setShowShareModal(true);
+
+    if (targetUser) {
+      setShowShareModal(true);
+    } else {
+      alert("Please wait a moment while your profile loads.");
+    }
   };
 
   useEffect(() => {
@@ -200,7 +206,7 @@ export default function LeaderboardPage() {
       }
     }
 
-    const drawEverything = (imgObj: HTMLImageElement | null) => {
+    const drawCanvasContent = (imgObj: HTMLImageElement | null, avatarImgObj: HTMLImageElement | null) => {
       if (imgObj) {
         try {
           ctx.drawImage(imgObj, 120, 90, 280, 85);
@@ -209,6 +215,10 @@ export default function LeaderboardPage() {
           ctx.font = '900 48px sans-serif';
           ctx.fillText('DoodleFox', 120, 150);
         }
+      } else {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '900 48px sans-serif';
+        ctx.fillText('DoodleFox', 120, 150);
       }
 
       // Tagline
@@ -263,38 +273,81 @@ export default function LeaderboardPage() {
       ctx.font = '700 22px sans-serif';
       ctx.fillText(`🔥 ${currentUser.streak || 0} Day Streak`, cardX + 230, cardY + 460);
 
-      // Avatar
-      const avatarImg = new Image();
-      avatarImg.crossOrigin = 'anonymous';
-      avatarImg.src = getCartoonAvatar(currentUser.avatar_seed || 'artist');
+      // Avatar Drawing with fallback circle
+      const avatarX = cardX + 230;
+      const avatarY = cardY + 185;
+      const avatarRadius = 55;
 
-      avatarImg.onload = () => {
-        const avatarX = cardX + 230;
-        const avatarY = cardY + 185;
-        const avatarRadius = 55;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      
+      if (avatarImgObj) {
+        try {
+          ctx.drawImage(avatarImgObj, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
+        } catch (e) {
+          ctx.fillStyle = '#fed7aa';
+          ctx.fillRect(avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
+        }
+      } else {
+        ctx.fillStyle = '#fed7aa';
+        ctx.fillRect(avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
+      }
+      ctx.restore();
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(avatarImg, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
-        ctx.restore();
+      ctx.beginPath();
+      ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#FF8A00';
+      ctx.stroke();
+    };
 
-        ctx.beginPath();
-        ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
-        ctx.lineWidth = 5;
-        ctx.strokeStyle = '#FF8A00';
-        ctx.stroke();
-      };
+    // Safe Image Loaders with Fallback Timers to prevent freezing
+    let headerImgLoaded = false;
+    let avatarImgLoaded = false;
+    let headerImgObj: HTMLImageElement | null = null;
+    let avatarImgObj: HTMLImageElement | null = null;
+
+    const checkAndDraw = () => {
+      drawCanvasContent(headerImgObj, avatarImgObj);
     };
 
     const headerImg = new Image();
     headerImg.crossOrigin = 'anonymous';
+    headerImg.onload = () => {
+      headerImgObj = headerImg;
+      headerImgLoaded = true;
+      checkAndDraw();
+    };
+    headerImg.onerror = () => {
+      headerImgLoaded = true;
+      checkAndDraw();
+    };
     headerImg.src = 'https://cdn.corenexis.com/f/tloOLJdZaNP.png';
 
-    headerImg.onload = () => drawEverything(headerImg);
-    headerImg.onerror = () => drawEverything(null);
+    const avatarImg = new Image();
+    avatarImg.crossOrigin = 'anonymous';
+    avatarImg.onload = () => {
+      avatarImgObj = avatarImg;
+      avatarImgLoaded = true;
+      checkAndDraw();
+    };
+    avatarImg.onerror = () => {
+      avatarImgLoaded = true;
+      checkAndDraw();
+    };
+    avatarImg.src = getCartoonAvatar(currentUser.avatar_seed || 'artist');
+
+    // Fallback safeguard in case network hangs
+    const safetyTimer = setTimeout(() => {
+      if (!headerImgLoaded || !avatarImgLoaded) {
+        checkAndDraw();
+      }
+    }, 1500);
+
+    return () => clearTimeout(safetyTimer);
 
   }, [showShareModal, currentUser, userRank]);
 
